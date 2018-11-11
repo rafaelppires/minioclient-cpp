@@ -14,6 +14,54 @@ const std::string MinioClient::DEFAULT_USER_AGENT = "A-SKY 0.0001";
 const long MinioClient::MAX_OBJECT_SIZE = 5L * 1024 * 1024 * 1024 * 1024;
 const int MinioClient::MIN_MULTIPART_SIZE = 5 * 1024 * 1024;
 //------------------------------------------------------------------------------
+MinioClient::MinioClient(const std::string &endpoint, int port,
+                         const std::string &accessKey,
+                         const std::string &secretKey,
+                         const std::string &region, bool secure,
+                         HttpClient *httpClient) {
+    if (endpoint.empty()) {
+        throw InvalidEndpointException(NULL_STRING, "null endpoint");
+    }
+
+    if (port < 0 || port > 65535) {
+        throw InvalidPortException(port, "port must be in range of 1 to 65535");
+    }
+
+#if 0
+    if (httpClient != nullptr) {
+      httpClient_ = httpClient;
+    } else {
+      this.httpClient = new OkHttpClient();
+      this.httpClient = this.httpClient.newBuilder()
+        .connectTimeout(DEFAULT_CONNECTION_TIMEOUT, TimeUnit.SECONDS)
+        .writeTimeout(DEFAULT_CONNECTION_TIMEOUT, TimeUnit.SECONDS)
+        .readTimeout(DEFAULT_CONNECTION_TIMEOUT, TimeUnit.SECONDS)
+        .build();
+    }
+#endif
+
+    HttpUrl url = HttpUrl::parse(endpoint);
+    if (url.encodedPath() != "/") {
+        throw InvalidEndpointException(endpoint, "no path allowed in endpoint");
+    }
+
+    UrlBuilder urlBuilder;
+#if 0
+      Scheme scheme = Scheme.HTTP;
+      if (secure) {
+        scheme = Scheme.HTTPS;
+      }
+
+      urlBuilder.scheme(scheme.toString());
+#endif
+
+    urlBuilder.port(port);
+    baseUrl_ = urlBuilder.build();
+    accessKey_ = accessKey;
+    secretKey_ = secretKey;
+    region_ = region;
+}
+//------------------------------------------------------------------------------
 void MinioClient::makeBucket(const std::string &bucketName,
                              const std::string &region) {
     // If region param is not provided, set it with the one provided by
@@ -28,7 +76,8 @@ void MinioClient::makeBucket(const std::string &bucketName,
     }
     std::string configString;
     if (reg.empty() || reg == US_EAST_1) {
-        // for 'us-east-1', location constraint is not required.  for more info
+        // for 'us-east-1', location constraint is not required.  for more
+        // info
         // http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
         configString = "";
     } else {
@@ -95,7 +144,8 @@ void MinioClient::putObject(const std::string &bucketName,
     /*
     std::string filePath = Paths::get(fileName);
     if (!Files::isRegularFile(filePath)) {
-        throw std::invalid_argument("'" + fileName + "': not a regular file");
+        throw std::invalid_argument("'" + fileName + "': not a regular
+    file");
     }
     */
 
@@ -555,8 +605,8 @@ Request MinioClient::createRequest(Method method, const std::string &bucketName,
             urlBuilder.addEncodedPathSegment(Escaper::encode(pathSegment));
         }
         if (!objectName.empty() && objectName[objectName.size() - 1] == '/') {
-            // Fix issue #648: preserve trailing '/' to work with proxies like
-            // nginx.
+            // Fix issue #648: preserve trailing '/' to work with proxies
+            // like nginx.
             urlBuilder.addPathSegment("");
         }
     }
@@ -588,8 +638,8 @@ Request MinioClient::createRequest(Method method, const std::string &bucketName,
                                   std::to_string(body.size()));
             chunkedUpload = true;
         } else if (url.isHttps()) {
-            // Fix issue #415: No need to compute sha256 if endpoint scheme is
-            // HTTPS.
+            // Fix issue #415: No need to compute sha256 if endpoint scheme
+            // is HTTPS.
             sha256Hash = "UNSIGNED-PAYLOAD";
             if (!body.empty()) {
                 md5Hash = Digest::md5Hash(body);
@@ -603,7 +653,8 @@ Request MinioClient::createRequest(Method method, const std::string &bucketName,
                 // Fix issue #579: Treat 'Delete Multiple Objects' specially
                 // which requires MD5 hash.
                 sha256Hash = Digest::sha256Hash(data);
-                md5Hash = Digest::md5Hash(data);;
+                md5Hash = Digest::md5Hash(data);
+                ;
             } else {
                 // Fix issue #567: Compute SHA256 hash only.
                 sha256Hash = Digest::sha256Hash(data);
@@ -622,16 +673,16 @@ Request MinioClient::createRequest(Method method, const std::string &bucketName,
     if (shouldOmitPortInHostHeader(url)) {
         requestBuilder.header("Host", url.host());
     } else {
-        requestBuilder.header("Host", url.host() + ":" + std::to_string(url.port()));
+        requestBuilder.header("Host",
+                              url.host() + ":" + std::to_string(url.port()));
     }
     requestBuilder.header("User-Agent", userAgent_);
     if (!sha256Hash.empty()) {
         requestBuilder.header("x-amz-content-sha256", sha256Hash);
     }
     DateTime date;
-    requestBuilder.header("x-amz-date",
-                          date.toString());
-                          //date.toString(DateFormat.AMZ_DATE_FORMAT));
+    requestBuilder.header("x-amz-date", date.toString());
+    // date.toString(DateFormat.AMZ_DATE_FORMAT));
 
 #if 0
     if (chunkedUpload) {

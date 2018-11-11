@@ -1,6 +1,7 @@
 #ifndef _MINIO_CLIENT_H_
 #define _MINIO_CLIENT_H_
 #include <dataobject.h>
+#include <httpclient.h>
 #include <httpresponse.h>
 #include <logprinter.h>
 #include <serversideencryption.h>
@@ -11,6 +12,7 @@ class MinioClient {
    public:
     typedef std::map<std::string, std::string> KeyValueMap;
     typedef std::vector<char> ByteArray;
+
     static const std::string US_EAST_1;
     static const std::string UPLOAD_ID;
     static const std::string END_HTTP;
@@ -20,6 +22,27 @@ class MinioClient {
     static const long MAX_OBJECT_SIZE;
     static const int MIN_MULTIPART_SIZE;
 
+    MinioClient(const std::string &endpoint, const std::string &accessKey,
+                const std::string &secretKey)
+        : MinioClient(endpoint, 0, accessKey, secretKey) {}
+    MinioClient(const std::string &endpoint, int port,
+                const std::string &accessKey, const std::string &secretKey)
+        : MinioClient(endpoint, port, accessKey, secretKey,
+                      endpoint.find("http://") == 0) {}
+    MinioClient(const std::string &endpoint, int port,
+                const std::string &accessKey, const std::string &secretKey,
+                bool secure)
+        : MinioClient(endpoint, port, accessKey, secretKey, "", secure) {}
+    MinioClient(const std::string &endpoint, int port,
+                const std::string &accessKey, const std::string &secretKey,
+                const std::string &region, bool secure)
+        : MinioClient(endpoint, port, accessKey, secretKey, region, secure,
+                      nullptr) {}
+    MinioClient(const std::string &endpoint, int port,
+                const std::string &accessKey, const std::string &secretKey,
+                const std::string &region, bool secure, HttpClient *httpClient);
+
+    void traceOn(std::basic_ostream<char> &stream); 
     void makeBucket(const std::string &bucketName,
                     const std::string &region = "");
     bool bucketExists(const std::string &bucketName);

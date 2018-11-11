@@ -1,10 +1,5 @@
-// class NoSuchAlgorithmException {};
-// class InsufficientDataException {};
-// class IOException {};
-// class InvalidKeyException {}
-// class XmlPullParserException {};
-// class InternalException {};
-// class InsufficientDataException {};
+#ifndef _MINIO_EXCEPTIONS_H_
+#define _MINIO_EXCEPTIONS_H_
 
 class ErrorCode {
    public:
@@ -19,7 +14,7 @@ class ErrorCode {
     Code e_;
 };
 
-class ErrorResponseException : public std::runtime_error{
+class ErrorResponseException : public std::runtime_error {
    public:
     ErrorResponseException(const std::string &msg) : std::runtime_error(msg) {}
     ErrorCode errorResponse() const { return ErrorCode(ErrorCode::NO_ERROR); }
@@ -38,8 +33,21 @@ class NoResponseException : public std::runtime_error {
 };
 
 class InvalidBucketNameException : public std::runtime_error {
-public:
-    InvalidBucketNameException( const std::string &name, const std::string &msg ) :
-                        std::runtime_error(name + " : " +msg) {}
+   public:
+    InvalidBucketNameException(const std::string &name, const std::string &msg)
+        : std::runtime_error(name + " : " + msg) {}
 };
 
+class InvalidEndpointException : public std::runtime_error {
+   public:
+    InvalidEndpointException(const std::string &name, const std::string &msg)
+        : std::runtime_error(name + " : " + msg) {}
+};
+
+class InvalidPortException : public std::runtime_error {
+   public:
+    InvalidPortException(int port, const std::string &msg)
+        : std::runtime_error(std::to_string(port) + " : " + msg) {}
+};
+
+#endif

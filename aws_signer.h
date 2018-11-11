@@ -1,7 +1,7 @@
 #ifndef _AWS_SIGNER_H_
 #define _AWS_SIGNER_H_
 
-#include <httpresponse.h>
+#include <httpclient.h>
 
 class Signer {
 public:

@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <httpclient.h>
 
 class DateTime {
 public:
@@ -78,27 +79,10 @@ class Escaper {
     }
 };
 
-class HttpUrl {
-   public:
-    std::string encodedPath();
-    std::string encodedQuery();
-    bool isHttps() const;
-    unsigned port() const;
-    std::string host() const;
-
-   private:
-};
-
-class Headers {
-   public:
-    std::string toString();
-    operator const std::string() { return toString(); }
-
-   private:
-};
-
 class UrlBuilder {
    public:
+    UrlBuilder() : port_(-1) {}
+
     void host(const std::string &host) { host_ = host; }
 
     void addEncodedPathSegment(const std::string &ps) {
@@ -109,7 +93,7 @@ class UrlBuilder {
                                   const std::string &value) {
         encoded_query_params_.push_back(std::make_pair(key, value));
     }
-
+    void port(int p) { if(p>=0 && p<=65535) port_ = p; }
     HttpUrl build();
     void url(const HttpUrl &);
 
@@ -117,6 +101,7 @@ class UrlBuilder {
 
    private:
     std::string host_;
+    int port_;
     std::vector<std::string> path_segments_;
     std::vector<std::pair<std::string, std::string> > encoded_query_params_;
 };
@@ -136,15 +121,6 @@ class RequestBody {
     static RequestBody create(const std::string &contentType, const std::vector<char> &body);
 };
 
-class Request {
-   public:
-    HttpUrl url();
-    std::string method();
-    Headers headers();
-
-   private:
-};
-
 class RequestBuilder {
    public:
     void url(const HttpUrl &);
@@ -156,34 +132,6 @@ class RequestBuilder {
 
    private:
     std::vector<std::pair<std::string, std::string> > headers_;
-};
-
-class Response {
-   public:
-    bool empty() { return true; }
-    std::string protocol() { return protocol_; }
-    std::string body() { return body_; }
-    int code() { return status_code_; }
-    bool isSuccessful();
-    Headers headers() const;
-
-   private:
-    std::string body_, protocol_;
-    int status_code_;
-};
-
-class Call {
-   public:
-    Response execute();
-
-   private:
-};
-
-class HttpClient {
-   public:
-    Call newCall(const Request &);
-
-   private:
 };
 
 class HttpResponse {
