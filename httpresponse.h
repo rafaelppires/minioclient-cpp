@@ -1,16 +1,11 @@
 #ifndef _HTTP_RESPONSE_H_
 #define _HTTP_RESPONSE_H_
 
+#include <stringutils.h>
+#include <httpclient.h>
 #include <string>
 #include <vector>
-#include <httpclient.h>
-
-class DateTime {
-public:
-    std::string toString() {
-        return "10_pra_daqui_a_pouco";
-    }
-};
+using namespace StringUtils;
 
 class Method {
    public:
@@ -53,30 +48,6 @@ class Escaper {
         str = replaceAll(str, "]", "%5D");
         return str;
     }
-
-    static std::vector<std::string> split(const std::string &str,
-                                          const std::string sep) {
-        char *cstr = const_cast<char *>(str.c_str());
-        char *current;
-        std::vector<std::string> arr;
-        current = strtok(cstr, sep.c_str());
-        while (current != NULL) {
-            arr.push_back(current);
-            current = strtok(NULL, sep.c_str());
-        }
-        return arr;
-    }
-
-   private:
-    static std::string replaceAll(std::string str, const std::string &from,
-                                  const std::string &to) {
-        size_t pos;
-        while ((pos = str.find(from)) != std::string::npos) {
-            str.replace(pos, from.size(), to);
-            pos += to.size();
-        }
-        return str;
-    }
 };
 
 class UrlBuilder {
@@ -93,11 +64,13 @@ class UrlBuilder {
                                   const std::string &value) {
         encoded_query_params_.push_back(std::make_pair(key, value));
     }
-    void port(int p) { if(p>=0 && p<=65535) port_ = p; }
-    HttpUrl build();
-    void url(const HttpUrl &);
+    void port(int p) {
+        if (p >= 0 && p <= 65535) port_ = p;
+    }
+    HttpUrl build() { return HttpUrl(); }
+    void url(const HttpUrl &) {}
 
-    void addPathSegment(const std::string &ps);
+    void addPathSegment(const std::string &ps) { path_segments_.push_back(ps); }
 
    private:
     std::string host_;
@@ -118,16 +91,19 @@ class ResponseHeader {
 
 class RequestBody {
    public:
-    static RequestBody create(const std::string &contentType, const std::vector<char> &body);
+    static RequestBody create(const std::string &contentType,
+                              const std::vector<char> &body) {
+        return RequestBody();
+    }
 };
 
 class RequestBuilder {
    public:
+    RequestBuilder();
+    RequestBuilder(const Request &);
     void url(const HttpUrl &);
     void method(const std::string &method, const RequestBody &body);
-    void header(const std::string &key, const std::string &value) {
-        headers_.push_back(std::make_pair(key, value));
-    }
+    RequestBuilder &header(const std::string &key, const std::string &value);
     Request build();
 
    private:

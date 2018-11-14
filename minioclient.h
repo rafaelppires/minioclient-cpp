@@ -10,9 +10,6 @@
 
 class MinioClient {
    public:
-    typedef std::map<std::string, std::string> KeyValueMap;
-    typedef std::vector<char> ByteArray;
-
     static const std::string US_EAST_1;
     static const std::string UPLOAD_ID;
     static const std::string END_HTTP;

@@ -2,32 +2,41 @@
 #define _HTTP_CLIENT_H_
 
 #include <string>
+#include <map>
+#include <set>
 
 class HttpUrl {
    public:
-    std::string encodedPath();
-    std::string encodedQuery();
-    bool isHttps() const;
-    unsigned port() const;
-    std::string host() const;
+    std::string encodedPath() { return ""; }
+    std::string encodedQuery() { return ""; }
+    bool isHttps() const { return false; }
+    int port() const { return port_; }
+    std::string host() const { return ""; }
 
     static HttpUrl parse(const std::string &endpoint);
+
    private:
+    int port_;
 };
 
 class Headers {
    public:
-    std::string toString();
+    std::string toString() { return ""; }
     operator const std::string() { return toString(); }
+    std::string get(const std::string &key);
+    std::set<std::string> names();
 
    private:
+    typedef std::map<std::string,std::string> HeadersType;
+    HeadersType headers_;
 };
 
 class Request {
    public:
-    HttpUrl url();
-    std::string method();
-    Headers headers();
+    HttpUrl url() { return HttpUrl(); }
+    std::string method() { return ""; }
+    std::string header(const std::string &) { return ""; }
+    Headers headers() { return Headers(); }
 
    private:
 };
@@ -48,7 +57,7 @@ class Response {
 
 class Call {
    public:
-    Response execute();
+    Response execute() { return Response(); }
 
    private:
 };

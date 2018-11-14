@@ -12,7 +12,7 @@ class Files {
         return in.tellg();
     }
 
-    static std::vector<char>&& readAll(const std::string fname) {
+    static std::vector<char> readAll(const std::string fname) {
         std::ifstream file(fname.c_str(), std::ios::binary | std::ios::ate);
         std::streamsize size = file.tellg();
         file.seekg(0, std::ios::beg);
@@ -21,7 +21,7 @@ class Files {
         if (!file.read(buffer.data(), size)) {
             throw std::runtime_error("could not read file '" + fname + "'");
         }
-        return std::move(buffer);
+        return buffer;
     }
 };
 
