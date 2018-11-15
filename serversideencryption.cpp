@@ -1,3 +1,23 @@
+#include <serversideencryption.h>
+
+ByteArray sumHmac(const void *key, size_t klen, const void *data, size_t dlen) {
+    // unsigned char *ret = HMAC(EVP_sha256(), key, keylen, data, datalen,
+    // result, resultlen);
+    return ByteArray();
+}
+
+ByteArray sumHmac(const std::string &key, const std::string &content) {
+    return sumHmac(key.data(),key.size(),content.data(),content.size());
+}
+
+ByteArray sumHmac(const std::string &key, const ByteArray &content) {
+    return sumHmac(key.data(),key.size(),content.data(),content.size());
+}
+
+ByteArray sumHmac(const ByteArray &key, const std::string &content) {
+    return sumHmac(key.data(),key.size(),content.data(),content.size());
+}
+
 
 #if 0
 package io.minio;

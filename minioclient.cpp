@@ -2,8 +2,10 @@
 #include <files.h>
 #include <minioclient.h>
 #include <minioexceptions.h>
+#include <stringutils.h>
 #include <map>
 #include <string>
+using namespace StringUtils;
 
 const std::string MinioClient::US_EAST_1 = "us-east-1";
 const std::string MinioClient::UPLOAD_ID = "uploadId";
@@ -601,7 +603,7 @@ Request MinioClient::createRequest(Method method, const std::string &bucketName,
     if (!objectName.empty()) {
         // Limitation: OkHttp does not allow to add '.' and '..' as path
         // segment.
-        for (const std::string &pathSegment : Escaper::split(objectName, "/")) {
+        for (const std::string &pathSegment : split(objectName, "/")) {
             urlBuilder.addEncodedPathSegment(Escaper::encode(pathSegment));
         }
         if (!objectName.empty() && objectName[objectName.size() - 1] == '/') {
@@ -642,7 +644,7 @@ Request MinioClient::createRequest(Method method, const std::string &bucketName,
             // is HTTPS.
             sha256Hash = "UNSIGNED-PAYLOAD";
             if (!body.empty()) {
-                md5Hash = Digest::md5Hash(body);
+                md5Hash = Digest::md5_base64(body);
             }
         } else {
             ByteArray data = body;
@@ -652,18 +654,18 @@ Request MinioClient::createRequest(Method method, const std::string &bucketName,
                 queryParamMap.find("delete") != queryParamMap.end()) {
                 // Fix issue #579: Treat 'Delete Multiple Objects' specially
                 // which requires MD5 hash.
-                sha256Hash = Digest::sha256Hash(data);
-                md5Hash = Digest::md5Hash(data);
+                sha256Hash = Digest::sha256_base64(data);
+                md5Hash = Digest::md5_base64(data);
                 ;
             } else {
                 // Fix issue #567: Compute SHA256 hash only.
-                sha256Hash = Digest::sha256Hash(data);
+                sha256Hash = Digest::sha256_base64(data);
             }
         }
     } else {
         // Fix issue #567: Compute MD5 hash only for anonymous access.
         if (!body.empty()) {
-            md5Hash = Digest::md5Hash(body);
+            md5Hash = Digest::md5_base64(body);
         }
     }
 
@@ -681,8 +683,8 @@ Request MinioClient::createRequest(Method method, const std::string &bucketName,
         requestBuilder.header("x-amz-content-sha256", sha256Hash);
     }
     DateTime date;
-    requestBuilder.header("x-amz-date", date.toString());
-    // date.toString(DateFormat.AMZ_DATE_FORMAT));
+    requestBuilder.header("x-amz-date", date.toString(DateFormat::AMZ_DATE_FORMAT));
+// date.toString(DateFormat.AMZ_DATE_FORMAT));
 
 #if 0
     if (chunkedUpload) {

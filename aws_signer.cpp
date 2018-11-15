@@ -51,7 +51,7 @@ void Signer::setScope() {
 void Signer::setCanonicalHeaders() {
     Headers headers = request_.headers();
     for (const std::string &name : headers.names()) {
-        std::string signedHeader = str_tolower(name);
+        std::string signedHeader = tolower(name);
         if (IGNORED_HEADERS.find(signedHeader) == IGNORED_HEADERS.end()) {
             canonicalHeaders_[signedHeader] = headers.get(name);
         }
