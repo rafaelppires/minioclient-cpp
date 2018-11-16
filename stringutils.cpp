@@ -1,6 +1,6 @@
 #include <stringutils.h>
 //------------------------------------------------------------------------------
-std::string MapJoiner::join(const KeyValueMap &map) {
+std::string StringUtils::MapJoiner::join(const KeyValueMap &map) {
     std::vector<std::string> tojoin;
     for (const auto &kv : map) {
         tojoin.push_back(kv.first + kvSeparator_ + kv.second);
@@ -11,7 +11,8 @@ std::string MapJoiner::join(const KeyValueMap &map) {
 //------------------------------------------------------------------------------
 std::vector<std::string> StringUtils::split(const std::string &str,
                                             const std::string sep) {
-    char *cstr = const_cast<char *>(str.c_str());
+    char *cstr = new char[str.size()+1];
+    memcpy(cstr, str.c_str(), str.size()+1);
     char *current;
     std::vector<std::string> arr;
     current = strtok(cstr, sep.c_str());

@@ -6,7 +6,7 @@
 RequestBuilder::RequestBuilder() {}
 
 //------------------------------------------------------------------------------
-RequestBuilder(const Request &) {}
+RequestBuilder::RequestBuilder(const Request &) {}
 
 //------------------------------------------------------------------------------
 void RequestBuilder::url(const HttpUrl &) {}
@@ -25,5 +25,11 @@ RequestBuilder &RequestBuilder::header(const std::string &key,
 //------------------------------------------------------------------------------
 Request RequestBuilder::build() { return Request(); }
 
+//------------------------------------------------------------------------------
+// RESPONSE HEADER
+//------------------------------------------------------------------------------
+ResponseHeader::ResponseHeader() {}
+//------------------------------------------------------------------------------
+ResponseHeader::ResponseHeader(const Headers &) {}
 //------------------------------------------------------------------------------
 

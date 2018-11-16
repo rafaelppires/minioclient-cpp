@@ -3,10 +3,11 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
-namespace StringUtils {
 typedef std::map<std::string, std::string> KeyValueMap;
 
+namespace StringUtils {
 
 template< typename T>
 std::string b16_encode( const T &str ) {
@@ -43,7 +44,7 @@ class Joiner {
     std::string join(const T &collection) const {
         std::string ret;
         for (const auto &it : collection) {
-            ret += *it + separator_;
+            ret += it + separator_;
         }
 
         if (!ret.empty())

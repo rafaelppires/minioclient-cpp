@@ -1,6 +1,15 @@
 #include <httpclient.h>
 
 //------------------------------------------------------------------------------
+// HTTP URL
+//------------------------------------------------------------------------------
+HttpUrl HttpUrl::parse(const std::string &endpoint) {
+    return HttpUrl();
+}
+
+//------------------------------------------------------------------------------
+// HTTP CLIENT
+//------------------------------------------------------------------------------
 Call HttpClient::newCall(const Request &) {
     Call ret;
     return ret;
@@ -16,6 +25,8 @@ std::set<std::string> Headers::names() {
 }
 
 //------------------------------------------------------------------------------
+// HEADERS
+//------------------------------------------------------------------------------
 std::string Headers::get(const std::string &k) {
     HeadersType::const_iterator it = headers_.find(k);
     if( it != headers_.end() )
@@ -23,4 +34,14 @@ std::string Headers::get(const std::string &k) {
     return "";
 }
 //------------------------------------------------------------------------------
+// RESPONSE
+//------------------------------------------------------------------------------
+bool Response::isSuccessful() {
+    return true;
+}
+
+//------------------------------------------------------------------------------
+Headers Response::headers() const {
+    return Headers();
+}
 

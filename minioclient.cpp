@@ -5,6 +5,7 @@
 #include <stringutils.h>
 #include <map>
 #include <string>
+#include <logprinter.h>
 using namespace StringUtils;
 
 const std::string MinioClient::US_EAST_1 = "us-east-1";
@@ -746,3 +747,12 @@ void MinioClient::checkBucketName(const std::string &name) {
     }
 #endif
 }
+
+//------------------------------------------------------------------------------
+void MinioClient::traceOn(std::basic_ostream<char> &stream) {
+    if (traceStream_ != nullptr)
+        delete traceStream_;
+    traceStream_ = new LogPrinter(stream);
+}
+
+//------------------------------------------------------------------------------

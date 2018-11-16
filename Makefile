@@ -1,6 +1,6 @@
 CXXFLAGS:=-std=c++11
 INCLUDES:=-I.
-CLIENTOBJS:=client.o minioclient.o httpclient.o aws_signer.o
+CLIENTOBJS:=client.o minioclient.o httpclient.o aws_signer.o stringutils.o serversideencryption.o httpresponse.o
 
 all: client
 
