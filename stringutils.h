@@ -59,7 +59,7 @@ class Joiner {
     std::string separator_;
 };
 
-std::vector<std::string> split(const std::string &str, const std::string sep);
+std::vector<std::string> split(const std::string &str, const std::string &sep);
 std::string replaceAll(std::string str, const std::string &from,
                        const std::string &to);
 std::string tolower(std::string s);

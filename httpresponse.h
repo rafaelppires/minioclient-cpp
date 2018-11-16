@@ -7,6 +7,7 @@
 #include <vector>
 using namespace StringUtils;
 
+//------------------------------------------------------------------------------
 class Method {
    public:
     enum Methods { HEAD, PUT, POST };
@@ -27,6 +28,7 @@ class Method {
     Methods m_;
 };
 
+//------------------------------------------------------------------------------
 class Escaper {
    public:
     static std::string encode(std::string str) {
@@ -50,35 +52,7 @@ class Escaper {
     }
 };
 
-class UrlBuilder {
-   public:
-    UrlBuilder() : port_(-1) {}
-
-    void host(const std::string &host) { host_ = host; }
-
-    void addEncodedPathSegment(const std::string &ps) {
-        path_segments_.push_back(ps);
-    }
-
-    void addEncodedQueryParameter(const std::string &key,
-                                  const std::string &value) {
-        encoded_query_params_.push_back(std::make_pair(key, value));
-    }
-    void port(int p) {
-        if (p >= 0 && p <= 65535) port_ = p;
-    }
-    HttpUrl build() { return HttpUrl(); }
-    void url(const HttpUrl &) {}
-
-    void addPathSegment(const std::string &ps) { path_segments_.push_back(ps); }
-
-   private:
-    std::string host_;
-    int port_;
-    std::vector<std::string> path_segments_;
-    std::vector<std::pair<std::string, std::string> > encoded_query_params_;
-};
-
+//------------------------------------------------------------------------------
 class ResponseHeader {
    public:
     ResponseHeader();
@@ -89,6 +63,7 @@ class ResponseHeader {
     std::string etag_;  // ETag
 };
 
+//------------------------------------------------------------------------------
 class RequestBody {
    public:
     static RequestBody create(const std::string &contentType,
@@ -97,6 +72,7 @@ class RequestBody {
     }
 };
 
+//------------------------------------------------------------------------------
 class RequestBuilder {
    public:
     RequestBuilder();
@@ -110,6 +86,7 @@ class RequestBuilder {
     std::vector<std::pair<std::string, std::string> > headers_;
 };
 
+//------------------------------------------------------------------------------
 class HttpResponse {
    public:
     HttpResponse() {}

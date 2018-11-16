@@ -1,4 +1,5 @@
 #include <httpresponse.h>
+#include <minioexceptions.h>
 
 //------------------------------------------------------------------------------
 // REQUEST BUILDER
@@ -31,5 +32,5 @@ Request RequestBuilder::build() { return Request(); }
 ResponseHeader::ResponseHeader() {}
 //------------------------------------------------------------------------------
 ResponseHeader::ResponseHeader(const Headers &) {}
-//------------------------------------------------------------------------------
 
+//------------------------------------------------------------------------------

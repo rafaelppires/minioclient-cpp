@@ -1,11 +1,11 @@
 #include <aws_signer.h>
 #include <files.h>
+#include <logprinter.h>
 #include <minioclient.h>
 #include <minioexceptions.h>
 #include <stringutils.h>
 #include <map>
 #include <string>
-#include <logprinter.h>
 using namespace StringUtils;
 
 const std::string MinioClient::US_EAST_1 = "us-east-1";
@@ -21,7 +21,7 @@ MinioClient::MinioClient(const std::string &endpoint, int port,
                          const std::string &accessKey,
                          const std::string &secretKey,
                          const std::string &region, bool secure,
-                         HttpClient *httpClient) {
+                         HttpClient *httpClient) : traceStream_(nullptr) {
     if (endpoint.empty()) {
         throw InvalidEndpointException(NULL_STRING, "null endpoint");
     }
@@ -48,18 +48,16 @@ MinioClient::MinioClient(const std::string &endpoint, int port,
         throw InvalidEndpointException(endpoint, "no path allowed in endpoint");
     }
 
-    UrlBuilder urlBuilder;
-#if 0
-      Scheme scheme = Scheme.HTTP;
-      if (secure) {
-        scheme = Scheme.HTTPS;
-      }
+    UrlBuilder urlBuilder = url.newBuilder();
+    Scheme scheme = Scheme::HTTP;
+    if (secure) {
+        scheme = Scheme::HTTPS;
+    }
 
-      urlBuilder.scheme(scheme.toString());
-#endif
-
+    urlBuilder.scheme(scheme.toString());
     urlBuilder.port(port);
     baseUrl_ = urlBuilder.build();
+
     accessKey_ = accessKey;
     secretKey_ = secretKey;
     region_ = region;
@@ -562,7 +560,7 @@ Request MinioClient::createRequest(Method method, const std::string &bucketName,
             NULL_STRING, "null bucket name for object '" + objectName + "'");
     }
 
-    UrlBuilder urlBuilder;  // = this.baseUrl.newBuilder();
+    UrlBuilder urlBuilder = baseUrl_.newBuilder();
     if (!bucketName.empty()) {
         checkBucketName(bucketName);
 
@@ -684,7 +682,8 @@ Request MinioClient::createRequest(Method method, const std::string &bucketName,
         requestBuilder.header("x-amz-content-sha256", sha256Hash);
     }
     DateTime date;
-    requestBuilder.header("x-amz-date", date.toString(DateFormat::AMZ_DATE_FORMAT));
+    requestBuilder.header("x-amz-date",
+                          date.toString(DateFormat::AMZ_DATE_FORMAT));
 // date.toString(DateFormat.AMZ_DATE_FORMAT));
 
 #if 0
@@ -750,8 +749,7 @@ void MinioClient::checkBucketName(const std::string &name) {
 
 //------------------------------------------------------------------------------
 void MinioClient::traceOn(std::basic_ostream<char> &stream) {
-    if (traceStream_ != nullptr)
-        delete traceStream_;
+    if (traceStream_ != nullptr) delete traceStream_;
     traceStream_ = new LogPrinter(stream);
 }
 

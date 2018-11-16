@@ -4,21 +4,9 @@
 #include <string>
 #include <map>
 #include <set>
+#include <httpurl.h>
 
-class HttpUrl {
-   public:
-    std::string encodedPath() { return ""; }
-    std::string encodedQuery() { return ""; }
-    bool isHttps() const { return false; }
-    int port() const { return port_; }
-    std::string host() const { return ""; }
-
-    static HttpUrl parse(const std::string &endpoint);
-
-   private:
-    int port_;
-};
-
+//------------------------------------------------------------------------------
 class Headers {
    public:
     std::string toString() { return ""; }
@@ -31,6 +19,7 @@ class Headers {
     HeadersType headers_;
 };
 
+//------------------------------------------------------------------------------
 class Request {
    public:
     HttpUrl url() { return HttpUrl(); }
@@ -41,6 +30,7 @@ class Request {
    private:
 };
 
+//------------------------------------------------------------------------------
 class Response {
    public:
     bool empty() { return true; }
@@ -55,6 +45,7 @@ class Response {
     int status_code_;
 };
 
+//------------------------------------------------------------------------------
 class Call {
    public:
     Response execute() { return Response(); }
@@ -62,6 +53,7 @@ class Call {
    private:
 };
 
+//------------------------------------------------------------------------------
 class HttpClient {
    public:
     Call newCall(const Request &);

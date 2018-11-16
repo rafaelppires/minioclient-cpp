@@ -1,4 +1,6 @@
 #include <stringutils.h>
+#include <algorithm>
+#include <cstring>
 //------------------------------------------------------------------------------
 std::string StringUtils::MapJoiner::join(const KeyValueMap &map) {
     std::vector<std::string> tojoin;
@@ -10,7 +12,7 @@ std::string StringUtils::MapJoiner::join(const KeyValueMap &map) {
 
 //------------------------------------------------------------------------------
 std::vector<std::string> StringUtils::split(const std::string &str,
-                                            const std::string sep) {
+                                            const std::string &sep) {
     char *cstr = new char[str.size()+1];
     memcpy(cstr, str.c_str(), str.size()+1);
     char *current;

@@ -1,6 +1,8 @@
 #ifndef _MINIO_EXCEPTIONS_H_
 #define _MINIO_EXCEPTIONS_H_
 
+#include <stdexcept>
+
 class ErrorCode {
    public:
     enum Code { NO_ERROR, NO_SUCH_BUCKET };
@@ -48,6 +50,11 @@ class InvalidPortException : public std::runtime_error {
    public:
     InvalidPortException(int port, const std::string &msg)
         : std::runtime_error(std::to_string(port) + " : " + msg) {}
+};
+
+class IllegalStateException : public std::runtime_error {
+   public:
+    IllegalStateException(const std::string &msg) : std::runtime_error(msg) {}
 };
 
 #endif

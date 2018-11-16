@@ -22,6 +22,6 @@ int main() {
                          " is successfully uploaded as asiaphotos.txt to "
                          "`asiatrip` bucket.";
     } catch (const std::exception &e) {
-        std::cerr << e.what();
+        std::cerr << e.what() << std::endl;
     }
 }
