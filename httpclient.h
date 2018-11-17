@@ -4,31 +4,7 @@
 #include <string>
 #include <map>
 #include <set>
-#include <httpurl.h>
-
-//------------------------------------------------------------------------------
-class Headers {
-   public:
-    std::string toString() { return ""; }
-    operator const std::string() { return toString(); }
-    std::string get(const std::string &key);
-    std::set<std::string> names();
-
-   private:
-    typedef std::map<std::string,std::string> HeadersType;
-    HeadersType headers_;
-};
-
-//------------------------------------------------------------------------------
-class Request {
-   public:
-    HttpUrl url() { return HttpUrl(); }
-    std::string method() { return ""; }
-    std::string header(const std::string &) { return ""; }
-    Headers headers() { return Headers(); }
-
-   private:
-};
+#include <httprequest.h>
 
 //------------------------------------------------------------------------------
 class Response {

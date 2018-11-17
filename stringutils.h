@@ -1,24 +1,9 @@
 #ifndef _STRING_UTILS_H_
 #define _STRING_UTILS_H_
 
-#include <string>
-#include <vector>
-#include <map>
-
-typedef std::map<std::string, std::string> KeyValueMap;
+#include <httpcommon.h>
 
 namespace StringUtils {
-
-template< typename T>
-std::string b16_encode( const T &str ) {
-    std::string ret;
-    static const char *dict = "0123456789abcdef";
-    for( const auto &c : str ) {
-        ret += dict[(((char)c)&0xf0) >> 4];
-        ret += dict[((char)c)&0x0f];
-    } 
-    return ret;
-}
 
 class Joiner;
 class MapJoiner {

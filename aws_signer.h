@@ -42,15 +42,15 @@ class Signer {
     std::string signature_;
     std::string authorization_;
 
-    void setScope();
-    void setCanonicalHeaders();
-    void setCanonicalQueryString();
-    void setCanonicalRequest();
-    void setStringToSign();
-    //void setChunkStringToSign();
-    void setSigningKey();
-    void setSignature();
-    void setAuthorization();
+    Signer &setScope();
+    Signer &setCanonicalHeaders();
+    Signer &setCanonicalQueryString();
+    Signer &setCanonicalRequest();
+    Signer &setStringToSign();
+    //Signer &setChunkStringToSign();
+    Signer &setSigningKey();
+    Signer &setSignature();
+    Signer &setAuthorization();
 };
 
 #endif

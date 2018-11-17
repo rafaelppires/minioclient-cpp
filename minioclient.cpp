@@ -4,8 +4,7 @@
 #include <minioclient.h>
 #include <minioexceptions.h>
 #include <stringutils.h>
-#include <map>
-#include <string>
+#include <digest.h>
 using namespace StringUtils;
 
 const std::string MinioClient::US_EAST_1 = "us-east-1";
@@ -16,12 +15,14 @@ const std::string MinioClient::END_HTTP = "----------END-HTTP----------";
 const std::string MinioClient::DEFAULT_USER_AGENT = "A-SKY 0.0001";
 const long MinioClient::MAX_OBJECT_SIZE = 5L * 1024 * 1024 * 1024 * 1024;
 const int MinioClient::MIN_MULTIPART_SIZE = 5 * 1024 * 1024;
+#include <iostream>
 //------------------------------------------------------------------------------
 MinioClient::MinioClient(const std::string &endpoint, int port,
                          const std::string &accessKey,
                          const std::string &secretKey,
                          const std::string &region, bool secure,
-                         HttpClient *httpClient) : traceStream_(nullptr) {
+                         HttpClient *httpClient)
+    : traceStream_(nullptr), userAgent_(DEFAULT_USER_AGENT) {
     if (endpoint.empty()) {
         throw InvalidEndpointException(NULL_STRING, "null endpoint");
     }
@@ -55,13 +56,21 @@ MinioClient::MinioClient(const std::string &endpoint, int port,
     }
 
     urlBuilder.scheme(scheme.toString());
-    urlBuilder.port(port);
+    if (port > 0) urlBuilder.port(port);
+    std::cout << "building baseUrl_ port: " << port << " secure: " << secure
+              << "\n";
     baseUrl_ = urlBuilder.build();
 
     accessKey_ = accessKey;
     secretKey_ = secretKey;
     region_ = region;
 }
+//------------------------------------------------------------------------------
+std::string MinioClient::getRegion(const std::string &) {
+    if (region_.empty()) region_ = US_EAST_1;
+    return region_;
+}
+
 //------------------------------------------------------------------------------
 void MinioClient::makeBucket(const std::string &bucketName,
                              const std::string &region) {
@@ -546,7 +555,6 @@ HttpResponse MinioClient::execute(Method method, const std::string &region,
     // throw ErrorResponseException(errorResponse, response);
     throw ErrorResponseException("errorResponse");
 }
-
 //------------------------------------------------------------------------------
 Request MinioClient::createRequest(Method method, const std::string &bucketName,
                                    const std::string &objectName,
@@ -559,7 +567,7 @@ Request MinioClient::createRequest(Method method, const std::string &bucketName,
         throw InvalidBucketNameException(
             NULL_STRING, "null bucket name for object '" + objectName + "'");
     }
-
+    std::cout << "base: " << baseUrl_.toString() << std::endl;
     UrlBuilder urlBuilder = baseUrl_.newBuilder();
     if (!bucketName.empty()) {
         checkBucketName(bucketName);
@@ -620,7 +628,7 @@ Request MinioClient::createRequest(Method method, const std::string &bucketName,
     }
 
     HttpUrl url = urlBuilder.build();
-
+    std::cout << url.toString() << std::endl;
     RequestBuilder requestBuilder;
     requestBuilder.url(url);
     for (auto entry : headerMap) {
@@ -634,9 +642,9 @@ Request MinioClient::createRequest(Method method, const std::string &bucketName,
         // Handle putobject specially to use chunked upload.
         if (method == Method::PUT && !objectName.empty() && !body.empty()) {
             sha256Hash = "STREAMING-AWS4-HMAC-SHA256-PAYLOAD";
-            requestBuilder.header("Content-Encoding", "aws-chunked");
-            requestBuilder.header("x-amz-decoded-content-length",
-                                  std::to_string(body.size()));
+            requestBuilder.header("Content-Encoding", "aws-chunked")
+                .header("x-amz-decoded-content-length",
+                        std::to_string(body.size()));
             chunkedUpload = true;
         } else if (url.isHttps()) {
             // Fix issue #415: No need to compute sha256 if endpoint scheme
@@ -653,12 +661,12 @@ Request MinioClient::createRequest(Method method, const std::string &bucketName,
                 queryParamMap.find("delete") != queryParamMap.end()) {
                 // Fix issue #579: Treat 'Delete Multiple Objects' specially
                 // which requires MD5 hash.
-                sha256Hash = Digest::sha256_base64(data);
+                sha256Hash = Digest::sha256_base16(data);
                 md5Hash = Digest::md5_base64(data);
                 ;
             } else {
                 // Fix issue #567: Compute SHA256 hash only.
-                sha256Hash = Digest::sha256_base64(data);
+                sha256Hash = Digest::sha256_base16(data);
             }
         }
     } else {
@@ -684,7 +692,7 @@ Request MinioClient::createRequest(Method method, const std::string &bucketName,
     DateTime date;
     requestBuilder.header("x-amz-date",
                           date.toString(DateFormat::AMZ_DATE_FORMAT));
-// date.toString(DateFormat.AMZ_DATE_FORMAT));
+    // date.toString(DateFormat.AMZ_DATE_FORMAT));
 
 #if 0
     if (chunkedUpload) {

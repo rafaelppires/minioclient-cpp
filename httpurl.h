@@ -5,6 +5,12 @@
 #include <vector>
 
 //------------------------------------------------------------------------------
+class Escaper {
+   public:
+    static std::string encode(std::string str);
+};
+
+//------------------------------------------------------------------------------
 class Scheme {
    public:
     enum Schemes { HTTP, HTTPS };
@@ -21,17 +27,18 @@ class HttpUrl {
    public:
     HttpUrl() {}
     HttpUrl(const UrlBuilder &);
-    std::string encodedPath() { return "/"; }
-    std::string encodedQuery() { return ""; }
+    std::string encodedPath() const;
+    std::string encodedQuery() const;
     bool isHttps() const { return scheme_ == "https"; }
     int port() const { return port_; }
     std::string host() const { return host_; }
     UrlBuilder newBuilder();
+    std::string toString() { return url_; }
 
     static HttpUrl parse(const std::string &endpoint);
 
    private:
-    std::string scheme_, host_;
+    std::string scheme_, host_, url_;
     int port_;
 };
 
@@ -51,7 +58,7 @@ class UrlBuilder {
     int effectivePort() const;
     void url(const HttpUrl &);
     HttpUrl build();
-    
+    std::string toString() const;
 
     static UrlBuilder parse(const std::string &input);
     static int defaultPort(const std::string &scheme);

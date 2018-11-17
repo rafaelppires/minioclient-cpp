@@ -1,4 +1,5 @@
 #include <aws_signer.h>
+#include <digest.h>
 #include <serversideencryption.h>
 #include <stringutils.h>
 //------------------------------------------------------------------------------
@@ -29,12 +30,12 @@ Request Signer::signV4(Request request, const std::string &region,
 
     Signer signer(request, contentSha256, date, region, accessKey, secretKey,
                   "");
-    signer.setScope();
-    signer.setCanonicalRequest();
-    signer.setStringToSign();
-    signer.setSigningKey();
-    signer.setSignature();
-    signer.setAuthorization();
+    signer.setScope()
+        .setCanonicalRequest()
+        .setStringToSign()
+        .setSigningKey()
+        .setSignature()
+        .setAuthorization();
 
     return RequestBuilder(request)
         .header("Authorization", signer.authorization_)
@@ -42,13 +43,14 @@ Request Signer::signV4(Request request, const std::string &region,
 }
 
 //------------------------------------------------------------------------------
-void Signer::setScope() {
+Signer &Signer::setScope() {
     scope_ = date_.toString(DateFormat::SIGNER_DATE_FORMAT) + "/" + region_ +
              "/s3/aws4_request";
+    return *this;
 }
 
 //------------------------------------------------------------------------------
-void Signer::setCanonicalHeaders() {
+Signer &Signer::setCanonicalHeaders() {
     Headers headers = request_.headers();
     for (const std::string &name : headers.names()) {
         std::string signedHeader = tolower(name);
@@ -63,16 +65,18 @@ void Signer::setCanonicalHeaders() {
 
     if (!signedHeaders_.empty())
         signedHeaders_.erase(signedHeaders_.size() - 1, 1);
+
+    return *this;
 }
 
 //------------------------------------------------------------------------------
-void Signer::setCanonicalQueryString() {
+Signer &Signer::setCanonicalQueryString() {
     std::map<std::string, std::string> signedQueryParams;
 
     std::string encodedQuery = url_.encodedQuery();
     if (encodedQuery == "") {
         canonicalQueryString_ = "";
-        return;
+        return *this;
     }
 
     for (const std::string &queryParam : split(encodedQuery, "&")) {
@@ -86,10 +90,11 @@ void Signer::setCanonicalQueryString() {
 
     canonicalQueryString_ =
         Joiner::on("&").withKeyValueSeparator("=").join(signedQueryParams);
+    return *this;
 }
 
 //------------------------------------------------------------------------------
-void Signer::setCanonicalRequest() {
+Signer &Signer::setCanonicalRequest() {
     setCanonicalHeaders();
     url_ = request_.url();
     setCanonicalQueryString();
@@ -108,52 +113,56 @@ void Signer::setCanonicalRequest() {
         "\n\n" + signedHeaders_ + "\n" + contentSha256_;
 
     canonicalRequestHash_ = Digest::sha256Hash(canonicalRequest_);
+    return *this;
 }
 
 //------------------------------------------------------------------------------
-void Signer::setStringToSign() {
+Signer &Signer::setStringToSign() {
     stringToSign_ = ALGORITHM + "\n" +
                     date_.toString(DateFormat::AMZ_DATE_FORMAT) + "\n" +
                     scope_ + "\n" + canonicalRequestHash_;
+    return *this;
 }
 
 //------------------------------------------------------------------------------
 #if 0
-  private void setChunkStringToSign() {
+  Signer &setChunkStringToSign() {
     stringToSign_ = "AWS4-HMAC-SHA256-PAYLOAD" + "\n"
       + date_.toString(DateFormat.AMZ_DATE_FORMAT) + "\n"
       + scope_ + "\n"
       + prevSignature_ + "\n"
       + Digest.sha256Hash("") + "\n"
       + contentSha256_;
+    return *this;
   }
 #endif
 
 //------------------------------------------------------------------------------
-void Signer::setSigningKey() {
+Signer &Signer::setSigningKey() {
     std::string aws4SecretKey = "AWS4" + secretKey_;
-
-    auto dateKey =
-        sumHmac(aws4SecretKey, date_.toString(DateFormat::SIGNER_DATE_FORMAT));
-
-    auto dateRegionKey = sumHmac(dateKey, region_);
-
-    auto dateRegionServiceKey = sumHmac(dateRegionKey, "s3");
-
-    signingKey_ = sumHmac(dateRegionServiceKey, "aws4_request");
+    auto dateKey = Digest::hmac_sha256(
+        aws4SecretKey, date_.toString(DateFormat::SIGNER_DATE_FORMAT));
+    auto dateRegionKey = Digest::hmac_sha256(dateKey, region_);
+    auto dateRegionServiceKey =
+        Digest::hmac_sha256(dateRegionKey, std::string("s3"));
+    signingKey_ =
+        Digest::hmac_sha256(dateRegionServiceKey, std::string("aws4_request"));
+    return *this;
 }
 
 //------------------------------------------------------------------------------
-void Signer::setSignature() {
-    auto digest = sumHmac(signingKey_, stringToSign_);
-    signature_ = b16_encode(digest);
+Signer &Signer::setSignature() {
+    auto digest = Digest::hmac_sha256(signingKey_, stringToSign_);
+    signature_ = Digest::base16_encode(digest);
+    return *this;
 }
 
 //------------------------------------------------------------------------------
-void Signer::setAuthorization() {
+Signer &Signer::setAuthorization() {
     authorization_ = ALGORITHM + " Credential=" + accessKey_ + "/" + scope_ +
                      ", SignedHeaders=" + signedHeaders_ +
                      ", Signature=" + signature_;
+    return *this;
 }
 
 //------------------------------------------------------------------------------

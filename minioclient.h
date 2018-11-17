@@ -25,7 +25,7 @@ class MinioClient {
     MinioClient(const std::string &endpoint, int port,
                 const std::string &accessKey, const std::string &secretKey)
         : MinioClient(endpoint, port, accessKey, secretKey,
-                      endpoint.find("http://") == 0) {}
+                      endpoint.find("https://") == 0) {}
     MinioClient(const std::string &endpoint, int port,
                 const std::string &accessKey, const std::string &secretKey,
                 bool secure)
@@ -105,7 +105,7 @@ class MinioClient {
                (!url.isHttps() && url.port() == 80);
     }
 
-    std::string getRegion(const std::string &) { return region_; }
+    std::string getRegion(const std::string &);
     std::string region_, accessKey_, secretKey_, userAgent_;
     LogPrinter *traceStream_;
     HttpClient httpClient_;

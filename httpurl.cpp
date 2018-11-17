@@ -3,6 +3,29 @@
 #include <stringutils.h>
 using namespace StringUtils;
 //------------------------------------------------------------------------------
+// ESCAPER
+//------------------------------------------------------------------------------
+std::string Escaper::encode(std::string str) {
+    return str = replaceAll(str, "!", "%21");
+    str = replaceAll(str, "$", "%24");
+    str = replaceAll(str, "&", "%26");
+    str = replaceAll(str, "'", "%27");
+    str = replaceAll(str, "(", "%28");
+    str = replaceAll(str, ")", "%29");
+    str = replaceAll(str, "*", "%2A");
+    str = replaceAll(str, "+", "%2B");
+    str = replaceAll(str, ",", "%2C");
+    str = replaceAll(str, "/", "%2F");
+    str = replaceAll(str, ":", "%3A");
+    str = replaceAll(str, ";", "%3B");
+    str = replaceAll(str, "=", "%3D");
+    str = replaceAll(str, "@", "%40");
+    str = replaceAll(str, "[", "%5B");
+    str = replaceAll(str, "]", "%5D");
+    return str;
+}
+
+//------------------------------------------------------------------------------
 // SCHEME
 //------------------------------------------------------------------------------
 std::string Scheme::toString() {
@@ -32,7 +55,7 @@ HttpUrl::HttpUrl(const UrlBuilder &builder) {
     // this.fragment = builder.encodedFragment != null
     //    ? percentDecode(builder.encodedFragment, false)
     //    : null;
-    // this.url = builder.toString();
+    url_ = builder.toString();
 }
 
 //------------------------------------------------------------------------------
@@ -40,6 +63,18 @@ HttpUrl HttpUrl::parse(const std::string &endpoint) {
     UrlBuilder builder = UrlBuilder::parse(endpoint);
     return builder.build();
 }
+
+//------------------------------------------------------------------------------
+std::string HttpUrl::encodedPath() const {
+    size_t pos = url_.find("/", scheme_.size() + 3);
+    if (pos == std::string::npos) 
+        return "";
+    return url_.substr(pos);
+}
+
+//------------------------------------------------------------------------------
+std::string HttpUrl::encodedQuery() const { return ""; }
+
 //------------------------------------------------------------------------------
 UrlBuilder HttpUrl::newBuilder() {
     UrlBuilder ret;
@@ -51,7 +86,24 @@ UrlBuilder HttpUrl::newBuilder() {
 //------------------------------------------------------------------------------
 // URL BUILDER
 //------------------------------------------------------------------------------
-UrlBuilder::UrlBuilder() : port_(-1) {}
+UrlBuilder::UrlBuilder() : port_(-1) { path_segments_.push_back(""); }
+
+//------------------------------------------------------------------------------
+std::string UrlBuilder::toString() const {
+    std::string ret;
+    if (scheme_.empty())
+        ret += "//";
+    else
+        ret += scheme_ + "://";
+    ret += host_;
+    if (port_ != -1 || !scheme_.empty()) {
+        int p = effectivePort();
+        if (scheme_.empty() || p != defaultPort(scheme_))
+            ret += ":" + std::to_string(p);
+    }
+    for (const auto &seg : path_segments_) ret += "/" + seg;
+    return ret;
+}
 
 //------------------------------------------------------------------------------
 UrlBuilder &UrlBuilder::host(const std::string &host) {
@@ -106,11 +158,6 @@ UrlBuilder UrlBuilder::parse(const std::string &input) {
 }
 
 //------------------------------------------------------------------------------
-void UrlBuilder::addEncodedPathSegment(const std::string &ps) {
-    path_segments_.push_back(ps);
-}
-
-//------------------------------------------------------------------------------
 void UrlBuilder::addEncodedQueryParameter(const std::string &key,
                                           const std::string &value) {
     encoded_query_params_.push_back(std::make_pair(key, value));
@@ -130,11 +177,21 @@ HttpUrl UrlBuilder::build() {
 }
 
 //------------------------------------------------------------------------------
-void UrlBuilder::url(const HttpUrl &) {}
+void UrlBuilder::url(const HttpUrl &url) {
+}
 
 //------------------------------------------------------------------------------
 void UrlBuilder::addPathSegment(const std::string &ps) {
-    path_segments_.push_back(ps);
+    addEncodedPathSegment(Escaper::encode(ps));
+}
+
+//------------------------------------------------------------------------------
+void UrlBuilder::addEncodedPathSegment(const std::string &ps) {
+    auto &l = path_segments_;
+    //l.insert(l.begin() + (l.empty() ? 0 : l.size() - 1), ps);
+    if( l.size() == 1 && l.front() == "" )
+        l.clear();
+    l.push_back(ps);
 }
 
 //------------------------------------------------------------------------------

@@ -19,15 +19,6 @@ std::set<std::string> Headers::names() {
 }
 
 //------------------------------------------------------------------------------
-// HEADERS
-//------------------------------------------------------------------------------
-std::string Headers::get(const std::string &k) {
-    HeadersType::const_iterator it = headers_.find(k);
-    if( it != headers_.end() )
-        return it->second;
-    return "";
-}
-//------------------------------------------------------------------------------
 // RESPONSE
 //------------------------------------------------------------------------------
 bool Response::isSuccessful() {

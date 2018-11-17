@@ -1,6 +1,9 @@
 #ifndef _DATE_TIME_H_
 #define _DATE_TIME_H_ 
 
+#include <ctime>
+#include <string>
+
 class DateFormat {
 public:
     enum Format {
@@ -11,9 +14,13 @@ public:
 
 class DateTime {
    public:
-    std::string toString( DateFormat::Format ) { return "10_pra_daqui_a_pouco"; }
+    DateTime() : time_(std::time(nullptr)) {}
+    std::string toString( DateFormat::Format );
 
-    static DateTime parseDateTime(const std::string &) { return DateTime(); }
+    static DateTime parseDateTime(const std::string &);
+
+   private:
+    std::time_t time_;
 };
 
 #endif
