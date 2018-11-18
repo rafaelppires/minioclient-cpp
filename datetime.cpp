@@ -11,7 +11,7 @@ std::string DateTime::toString(DateFormat::Format f) {
             format = "%Y%m%dT%H%M%SZ";
             break;
     };
-    if (std::strftime(tstr, sizeof(tstr), format, std::localtime(&time_))) {
+    if (std::strftime(tstr, sizeof(tstr), format, std::gmtime(&time_))) {
         return tstr;
     }
 

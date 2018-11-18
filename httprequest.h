@@ -2,38 +2,7 @@
 #define _HTTP_REQUEST_H_
 
 #include <httpurl.h>
-#include <set>
-#include <list>
-
-//------------------------------------------------------------------------------
-typedef std::list<std::pair<std::string,std::string> > HeadersType;
-class HeadersBuilder;
-class Headers {
-   public:
-    Headers() {}
-    Headers(const HeadersBuilder &);
-    std::string toString();
-    operator const std::string() { return toString(); }
-    std::string get(const std::string &key);
-    std::set<std::string> names();
-    HeadersBuilder newBuilder() const;
-
-   private:
-    HeadersType headers_;
-    friend class HeadersBuilder;
-};
-
-//------------------------------------------------------------------------------
-class HeadersBuilder {
-public:
-    HeadersBuilder() {}
-    HeadersBuilder(const Headers&);
-    Headers build() const;
-    HeadersBuilder &set(const std::string &key, const std::string &value);
-private:
-    HeadersType headers_;
-    friend class Headers;
-};
+#include <httpheaders.h>
 
 //------------------------------------------------------------------------------
 class RequestBody {
@@ -51,10 +20,13 @@ class Request {
     Request() {}
     Request(const RequestBuilder &);
 
-    const HttpUrl &url() { return url_; }
-    std::string method() { return method_; }
-    std::string header(const std::string &) { return ""; }
-    Headers headers() { return headers_; }
+    const HttpUrl &url();
+    const Headers &headers();
+    std::string method();
+    std::string header(const std::string &);
+    std::string statusLine();
+    std::string headerString();
+    std::string httpHeader();
 
    private:
     HttpUrl url_;

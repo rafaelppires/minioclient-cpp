@@ -5,7 +5,13 @@
 
 class ErrorCode {
    public:
-    enum Code { NO_ERROR, NO_SUCH_BUCKET };
+    enum Code {
+        NO_ERROR,
+        NO_SUCH_BUCKET,
+        NO_SUCH_KEY,
+        RESOURCE_NOT_FOUND,
+        UNKNOWN_ERROR
+    };
 
     ErrorCode() : e_(NO_ERROR) {}
     ErrorCode(Code c) : e_(c) {}
@@ -18,8 +24,14 @@ class ErrorCode {
 
 class ErrorResponseException : public std::runtime_error {
    public:
-    ErrorResponseException(const std::string &msg) : std::runtime_error(msg) {}
-    ErrorCode errorResponse() const { return ErrorCode(ErrorCode::NO_ERROR); }
+    ErrorResponseException(ErrorCode::Code c)
+        : code_(c), std::runtime_error("Response error") {}
+    ErrorResponseException(const std::string &msg)
+        : code_(ErrorCode::UNKNOWN_ERROR), std::runtime_error(msg) {}
+    ErrorCode errorResponse() const { return code_; }
+
+   private:
+    ErrorCode code_;
 };
 
 class RegionConflictException : public std::invalid_argument {

@@ -1,40 +1,85 @@
 #ifndef _HTTP_CLIENT_H_
 #define _HTTP_CLIENT_H_
 
-#include <string>
+#include <httprequest.h>
 #include <map>
 #include <set>
-#include <httprequest.h>
+#include <string>
 
 //------------------------------------------------------------------------------
+class ResponseBuilder;
 class Response {
    public:
-    bool empty() { return true; }
+    Response();
+    Response(const ResponseBuilder &);
+    bool empty();
+    bool isSuccessful();
+    const Headers &headers() const;
     std::string protocol() { return protocol_; }
     std::string body() { return body_; }
-    int code() { return status_code_; }
-    bool isSuccessful();
-    Headers headers() const;
+    int code() { return code_; }
 
    private:
-    std::string body_, protocol_;
-    int status_code_;
+    int code_;
+    std::string body_, protocol_, message_;
+    Headers headers_;
+    friend class ResponseBuilder;
+};
+
+//------------------------------------------------------------------------------
+class ResponseBuilder {
+   public:
+    ResponseBuilder() {}
+    ResponseBuilder(const Response &);
+    ResponseBuilder &protocol(const std::string &);
+    ResponseBuilder &code(int);
+    ResponseBuilder &message(const std::string &);
+    ResponseBuilder &headers(const HeadersBuilder &);
+    Response build();
+
+   private:
+    int code_;
+    std::string body_, protocol_, message_;
+    HeadersBuilder headers_;
+    friend class Response;
+};
+
+//------------------------------------------------------------------------------
+class Call;
+class HttpClient {
+   public:
+    HttpClient();
+    Call newCall(const Request &);
+    Response dispatch(Call &);
+
+   private:
+    std::map<std::string, int> connections_;
+
+    int connect(const std::string host, int port);
+};
+
+//------------------------------------------------------------------------------
+class StatusLine {
+   public:
+    StatusLine() : code_(-1) {}
+    static StatusLine parse(const std::string &, size_t *pos = nullptr);
+
+   private:
+    std::string protocol_, message_;
+    int code_;
+    friend class HttpClient;
 };
 
 //------------------------------------------------------------------------------
 class Call {
    public:
-    Response execute() { return Response(); }
+    Call(HttpClient &c, const Request &r);
+    Response execute();
 
    private:
-};
-
-//------------------------------------------------------------------------------
-class HttpClient {
-   public:
-    Call newCall(const Request &);
-
-   private:
+    Request request_;
+    HttpClient &client_;
+    friend class HttpClient;
 };
 
 #endif

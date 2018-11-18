@@ -112,7 +112,7 @@ Signer &Signer::setCanonicalRequest() {
         Joiner::on("\n").withKeyValueSeparator(":").join(canonicalHeaders_) +
         "\n\n" + signedHeaders_ + "\n" + contentSha256_;
 
-    canonicalRequestHash_ = Digest::sha256Hash(canonicalRequest_);
+    canonicalRequestHash_ = Digest::sha256_base16(canonicalRequest_);
     return *this;
 }
 

@@ -33,7 +33,7 @@ class HttpUrl {
     int port() const { return port_; }
     std::string host() const { return host_; }
     UrlBuilder newBuilder();
-    std::string toString() { return url_; }
+    std::string toString() const { return url_; }
 
     static HttpUrl parse(const std::string &endpoint);
 

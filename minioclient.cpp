@@ -12,10 +12,9 @@ const std::string MinioClient::UPLOAD_ID = "uploadId";
 const std::string MinioClient::NULL_STRING = "(null)";
 const std::string MinioClient::S3_AMAZONAWS_COM = "s3.amazonaws.com";
 const std::string MinioClient::END_HTTP = "----------END-HTTP----------";
-const std::string MinioClient::DEFAULT_USER_AGENT = "A-SKY 0.0001";
+const std::string MinioClient::DEFAULT_USER_AGENT = "A-SKY WriterProxy 0.0001";
 const long MinioClient::MAX_OBJECT_SIZE = 5L * 1024 * 1024 * 1024 * 1024;
 const int MinioClient::MIN_MULTIPART_SIZE = 5 * 1024 * 1024;
-#include <iostream>
 //------------------------------------------------------------------------------
 MinioClient::MinioClient(const std::string &endpoint, int port,
                          const std::string &accessKey,
@@ -31,18 +30,16 @@ MinioClient::MinioClient(const std::string &endpoint, int port,
         throw InvalidPortException(port, "port must be in range of 1 to 65535");
     }
 
-#if 0
     if (httpClient != nullptr) {
-      httpClient_ = httpClient;
-    } else {
-      this.httpClient = new OkHttpClient();
-      this.httpClient = this.httpClient.newBuilder()
+      httpClient_ = *httpClient;
+    } /*else {
+      httpClient = OkHttpClient();
+      httpClient = httpClient.newBuilder()
         .connectTimeout(DEFAULT_CONNECTION_TIMEOUT, TimeUnit.SECONDS)
         .writeTimeout(DEFAULT_CONNECTION_TIMEOUT, TimeUnit.SECONDS)
         .readTimeout(DEFAULT_CONNECTION_TIMEOUT, TimeUnit.SECONDS)
         .build();
-    }
-#endif
+    }*/
 
     HttpUrl url = HttpUrl::parse(endpoint);
     if (url.encodedPath() != "/") {
@@ -57,8 +54,6 @@ MinioClient::MinioClient(const std::string &endpoint, int port,
 
     urlBuilder.scheme(scheme.toString());
     if (port > 0) urlBuilder.port(port);
-    std::cout << "building baseUrl_ port: " << port << " secure: " << secure
-              << "\n";
     baseUrl_ = urlBuilder.build();
 
     accessKey_ = accessKey;
@@ -429,14 +424,8 @@ HttpResponse MinioClient::execute(Method method, const std::string &region,
 
     if (traceStream_ != nullptr) {
         traceStream_->println("---------START-HTTP---------");
-        std::string encodedPath = request.url().encodedPath();
-        std::string encodedQuery = request.url().encodedQuery();
-        if (!encodedQuery.empty()) {
-            encodedPath += "?" + encodedQuery;
-        }
-        traceStream_->println(request.method() + " " + encodedPath +
-                              " HTTP/1.1");
-        std::string headers = request.headers().toString();
+        traceStream_->println(request.statusLine());
+        std::string headers = request.headerString();
 #if 0
         // WARNING WARNING WARNING
                 .replaceAll("Signature=([0-9a-f]+)", "Signature=*REDACTED*")
@@ -500,23 +489,27 @@ HttpResponse MinioClient::execute(Method method, const std::string &region,
         traceStream_->println(END_HTTP);
     }
     if (errorResponse == null) {
-        ErrorCode ec;
+#endif
+        ErrorCode::Code ec = ErrorCode::UNKNOWN_ERROR;
         switch (response.code()) {
+#if 0
             case 307:
                 ec = ErrorCode.REDIRECT;
                 break;
             case 400:
                 ec = ErrorCode.INVALID_URI;
                 break;
+#endif
             case 404:
-                if (objectName != null) {
-                    ec = ErrorCode.NO_SUCH_KEY;
-                } else if (bucketName != null) {
-                    ec = ErrorCode.NO_SUCH_BUCKET;
+                if (!objectName.empty()) {
+                    ec = ErrorCode::NO_SUCH_KEY;
+                } else if (!bucketName.empty()) {
+                    ec = ErrorCode::NO_SUCH_BUCKET;
                 } else {
-                    ec = ErrorCode.RESOURCE_NOT_FOUND;
+                    ec = ErrorCode::RESOURCE_NOT_FOUND;
                 }
                 break;
+#if 0
             case 501:
             case 405:
                 ec = ErrorCode.METHOD_NOT_ALLOWED;
@@ -536,7 +529,9 @@ HttpResponse MinioClient::execute(Method method, const std::string &region,
                     "unhandled HTTP code " + response.code() +
                     ".  Please report this issue at " +
                     "https://github.com/minio/minio-java/issues");
+#endif
         }
+#if 0
 
         errorResponse = new ErrorResponse(
             ec, bucketName, objectName, request.url().encodedPath(),
@@ -552,8 +547,7 @@ HttpResponse MinioClient::execute(Method method, const std::string &region,
     }
 
 #endif
-    // throw ErrorResponseException(errorResponse, response);
-    throw ErrorResponseException("errorResponse");
+    throw ErrorResponseException(ec);
 }
 //------------------------------------------------------------------------------
 Request MinioClient::createRequest(Method method, const std::string &bucketName,
@@ -567,7 +561,6 @@ Request MinioClient::createRequest(Method method, const std::string &bucketName,
         throw InvalidBucketNameException(
             NULL_STRING, "null bucket name for object '" + objectName + "'");
     }
-    std::cout << "base: " << baseUrl_.toString() << std::endl;
     UrlBuilder urlBuilder = baseUrl_.newBuilder();
     if (!bucketName.empty()) {
         checkBucketName(bucketName);
@@ -628,7 +621,6 @@ Request MinioClient::createRequest(Method method, const std::string &bucketName,
     }
 
     HttpUrl url = urlBuilder.build();
-    std::cout << url.toString() << std::endl;
     RequestBuilder requestBuilder;
     requestBuilder.url(url);
     for (auto entry : headerMap) {

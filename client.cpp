@@ -7,20 +7,21 @@ int main() {
         MinioClient minioClient("http://127.0.0.1:9000", "Y87GXVKRA7JUGN705P9V",
                                 "tC5AdH3WI5CDGflF2gdSRqEvtqslgMNakiCDpFg+");
         minioClient.traceOn(std::cout);
-        bool isExist = minioClient.bucketExists("asiatrip");
+
+        std::string bucket("newbucket");
+        bool isExist = minioClient.bucketExists(bucket);
+
         if (isExist) {
             std::cout << "Bucket already exists." << std::endl;
         } else {
-            // Make a new bucket called asiatrip to hold a zip file of photos.
-            minioClient.makeBucket("asiatrip");
+            minioClient.makeBucket(bucket);
         }
-
-        std::string filepath =
-            "/Users/rafaelpp/Temp/minioclient-cpp/client.cpp";
-        minioClient.putObject("asiatrip", "asiaphotos.txt", filepath);
-        std::cout << filepath +
-                         " is successfully uploaded as asiaphotos.txt to "
-                         "`asiatrip` bucket.";
+/*
+        std::string filepath = "client.cpp", remotename = "content.txt";
+        minioClient.putObject(bucket, remotename, filepath);
+        std::cout << filepath + " is successfully uploaded as '" + remotename +
+                         "' to '" + bucket + "' bucket.";
+*/
     } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
     }
