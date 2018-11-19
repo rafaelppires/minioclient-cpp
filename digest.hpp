@@ -3,6 +3,7 @@
 #include <openssl/sha.h>
 #include <openssl/md5.h>
 #include <openssl/hmac.h>
+#include <assert.h>
 //------------------------------------------------------------------------------
 template< typename T1, typename T2 >
 ByteArray Digest::hmac_sha256(const T1 &k, const T2 &content) {

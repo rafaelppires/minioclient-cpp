@@ -1,10 +1,10 @@
 #include <aws_signer.h>
+#include <digest.h>
 #include <files.h>
 #include <logprinter.h>
 #include <minioclient.h>
 #include <minioexceptions.h>
 #include <stringutils.h>
-#include <digest.h>
 using namespace StringUtils;
 
 const std::string MinioClient::US_EAST_1 = "us-east-1";
@@ -31,7 +31,7 @@ MinioClient::MinioClient(const std::string &endpoint, int port,
     }
 
     if (httpClient != nullptr) {
-      httpClient_ = *httpClient;
+        httpClient_ = *httpClient;
     } /*else {
       httpClient = OkHttpClient();
       httpClient = httpClient.newBuilder()
@@ -457,8 +457,39 @@ HttpResponse MinioClient::execute(Method method, const std::string &region,
             traceStream_->println(END_HTTP);
         }
         return HttpResponse(response);
+    } else
+        throw handleError(objectName, bucketName, response);
+}
+//------------------------------------------------------------------------------
+std::string extract(const std::string &source, const std::string &begin_token,
+                    const std::string &end_token) {
+    size_t pos1 = source.find(begin_token), pos2;
+    if (pos1 != std::string::npos) {
+        pos1 += begin_token.size();
+        pos2 = source.find(end_token, pos1);
+        if (pos2 != std::string::npos) {
+            return source.substr(pos1, pos2-pos1);
+        }
     }
+    return "";
+}
+//------------------------------------------------------------------------------
+ErrorResponseException MinioClient::handleError(const std::string &objectName,
+                                                const std::string &bucketName,
+                                                const Response &response) {
+    const std::string &message = response.body();
+    std::string bcodetag = "<Code>", ecodetag = "</Code>",
+                bmsgtag = "<Message>", emsgtag = "</Message>",
+                ecode = extract(message, bcodetag, ecodetag),
+                emsg = extract(message, bmsgtag, emsgtag);
+    if(!ecode.empty() || !emsg.empty())
+        return ErrorResponseException(ecode + ": " + emsg);
 
+    if (traceStream_ != nullptr) {
+        if(!message.empty())
+            traceStream_->println(message);
+        traceStream_->println(END_HTTP);
+    }
 #if 0
     ErrorResponse errorResponse = nullptr;
 
@@ -490,64 +521,53 @@ HttpResponse MinioClient::execute(Method method, const std::string &region,
     }
     if (errorResponse == null) {
 #endif
-        ErrorCode::Code ec = ErrorCode::UNKNOWN_ERROR;
-        switch (response.code()) {
+    ErrorCode::Code ec = ErrorCode::UNKNOWN_ERROR;
+    switch (response.code()) {
+        case 307:
+            ec = ErrorCode::REDIRECT;
+            break;
+        case 400:
+            ec = ErrorCode::INVALID_URI;
+            break;
+        case 404:
+            if (!objectName.empty()) {
+                ec = ErrorCode::NO_SUCH_KEY;
+            } else if (!bucketName.empty()) {
+                ec = ErrorCode::NO_SUCH_BUCKET;
+            } else {
+                ec = ErrorCode::RESOURCE_NOT_FOUND;
+            }
+            break;
+        case 501:
+        case 405:
+            ec = ErrorCode::METHOD_NOT_ALLOWED;
+            break;
+        case 409:
+            if (!bucketName.empty()) {
+                ec = ErrorCode::NO_SUCH_BUCKET;
+            } else {
+                ec = ErrorCode::RESOURCE_CONFLICT;
+            }
+            break;
+        case 403:
+            ec = ErrorCode::ACCESS_DENIED;
+            break;
 #if 0
-            case 307:
-                ec = ErrorCode.REDIRECT;
-                break;
-            case 400:
-                ec = ErrorCode.INVALID_URI;
-                break;
-#endif
-            case 404:
-                if (!objectName.empty()) {
-                    ec = ErrorCode::NO_SUCH_KEY;
-                } else if (!bucketName.empty()) {
-                    ec = ErrorCode::NO_SUCH_BUCKET;
-                } else {
-                    ec = ErrorCode::RESOURCE_NOT_FOUND;
-                }
-                break;
-#if 0
-            case 501:
-            case 405:
-                ec = ErrorCode.METHOD_NOT_ALLOWED;
-                break;
-            case 409:
-                if (bucketName != null) {
-                    ec = ErrorCode.NO_SUCH_BUCKET;
-                } else {
-                    ec = ErrorCode.RESOURCE_CONFLICT;
-                }
-                break;
-            case 403:
-                ec = ErrorCode.ACCESS_DENIED;
-                break;
             default:
                 throw InternalException(
                     "unhandled HTTP code " + response.code() +
                     ".  Please report this issue at " +
                     "https://github.com/minio/minio-java/issues");
 #endif
-        }
+    }
 #if 0
 
         errorResponse = new ErrorResponse(
             ec, bucketName, objectName, request.url().encodedPath(),
             header.xamzRequestId(), header.xamzId2());
     }
-
-    // invalidate region cache if needed
-    if (errorResponse.errorCode() == ErrorCode.NO_SUCH_BUCKET) {
-        BucketRegionCache.INSTANCE.remove(bucketName);
-        // TODO: handle for other cases as well
-        // observation: on HEAD of a bucket with wrong region gives 400 without
-        // body
-    }
-
 #endif
-    throw ErrorResponseException(ec);
+    return ErrorResponseException(ec);
 }
 //------------------------------------------------------------------------------
 Request MinioClient::createRequest(Method method, const std::string &bucketName,

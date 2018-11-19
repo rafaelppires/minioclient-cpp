@@ -10,11 +10,41 @@ class ErrorCode {
         NO_SUCH_BUCKET,
         NO_SUCH_KEY,
         RESOURCE_NOT_FOUND,
+        REDIRECT,
+        INVALID_URI,
+        METHOD_NOT_ALLOWED,
+        RESOURCE_CONFLICT,
+        ACCESS_DENIED,
         UNKNOWN_ERROR
     };
 
     ErrorCode() : e_(NO_ERROR) {}
     ErrorCode(Code c) : e_(c) {}
+    static std::string toString(Code c) {
+        switch (c) {
+            case NO_ERROR:
+                return "No error";
+            case NO_SUCH_BUCKET:
+                return "No such bucket";
+            case NO_SUCH_KEY:
+                return "No such key";
+            case RESOURCE_NOT_FOUND:
+                return "Resource not found";
+            case REDIRECT:
+                return "Redirect";
+            case INVALID_URI:
+                return "Invalid URI";
+            case METHOD_NOT_ALLOWED:
+                return "Method not allowed";
+            case RESOURCE_CONFLICT:
+                return "Resource conflict";
+            case ACCESS_DENIED:
+                return "Access denied";
+            case UNKNOWN_ERROR:
+            default:
+                return "Unknown error";
+        };
+    }
 
     Code errorCode() const { return e_; }
 
@@ -25,7 +55,8 @@ class ErrorCode {
 class ErrorResponseException : public std::runtime_error {
    public:
     ErrorResponseException(ErrorCode::Code c)
-        : code_(c), std::runtime_error("Response error") {}
+        : code_(c),
+          std::runtime_error("Response error: " + ErrorCode::toString(c)) {}
     ErrorResponseException(const std::string &msg)
         : code_(ErrorCode::UNKNOWN_ERROR), std::runtime_error(msg) {}
     ErrorCode errorResponse() const { return code_; }

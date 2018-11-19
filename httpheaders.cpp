@@ -10,8 +10,9 @@ Headers::Headers(const HeadersBuilder &hb) { headers_ = hb.headers_; }
 
 //------------------------------------------------------------------------------
 std::string Headers::get(const std::string &k) {
+    std::string key = tolower(k);
     for (const auto &it : headers_) {
-        if (it.first == k) return it.second;
+        if (tolower(it.first) == key) return it.second;
     }
     return "";
 }
@@ -55,6 +56,15 @@ HeadersBuilder &HeadersBuilder::set(const std::string &key,
     return *this;
 }
 //------------------------------------------------------------------------------
+std::string HeadersBuilder::get(const std::string &k) {
+    std::string key = tolower(k);
+    for (const auto &it : headers_) {
+        if (tolower(it.first) == key) return it.second;
+    }
+    return "";
+}
+
+//------------------------------------------------------------------------------
 HeadersBuilder HeadersBuilder::parse(const std::string &input) {
     HeadersBuilder ret;
     for (const auto &kv : split(input, Headers::eol)) {
@@ -66,3 +76,5 @@ HeadersBuilder HeadersBuilder::parse(const std::string &input) {
     }
     return ret;
 }
+
+//------------------------------------------------------------------------------

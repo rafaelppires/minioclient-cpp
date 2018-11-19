@@ -30,6 +30,7 @@ public:
     HeadersBuilder() {}
     HeadersBuilder(const Headers&);
     Headers build() const;
+    std::string get(const std::string &key);
     HeadersBuilder &set(const std::string &key, const std::string &value);
 
     static HeadersBuilder parse(const std::string &);

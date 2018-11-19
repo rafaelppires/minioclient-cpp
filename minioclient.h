@@ -4,6 +4,7 @@
 #include <httpclient.h>
 #include <httpresponse.h>
 #include <logprinter.h>
+#include <minioexceptions.h>
 #include <serversideencryption.h>
 #include <map>
 #include <string>
@@ -39,7 +40,7 @@ class MinioClient {
                 const std::string &accessKey, const std::string &secretKey,
                 const std::string &region, bool secure, HttpClient *httpClient);
 
-    void traceOn(std::basic_ostream<char> &stream); 
+    void traceOn(std::basic_ostream<char> &stream);
     void makeBucket(const std::string &bucketName,
                     const std::string &region = "");
     bool bucketExists(const std::string &bucketName);
@@ -100,6 +101,9 @@ class MinioClient {
                           const ByteArray &body);
     void checkBucketName(const std::string &name);
 
+    ErrorResponseException handleError(const std::string &objectName,
+                                       const std::string &bucketName,
+                                       const Response &response);
     bool shouldOmitPortInHostHeader(const HttpUrl &url) {
         return (url.isHttps() && url.port() == 443) ||
                (!url.isHttps() && url.port() == 80);
