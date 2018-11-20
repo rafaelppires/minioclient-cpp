@@ -9,7 +9,7 @@ const std::string Headers::eol = "\r\n";
 Headers::Headers(const HeadersBuilder &hb) { headers_ = hb.headers_; }
 
 //------------------------------------------------------------------------------
-std::string Headers::get(const std::string &k) {
+std::string Headers::get(const std::string &k) const {
     std::string key = tolower(k);
     for (const auto &it : headers_) {
         if (tolower(it.first) == key) return it.second;
@@ -47,6 +47,28 @@ std::set<std::string> Headers::names() {
 HeadersBuilder::HeadersBuilder(const Headers &h) { headers_ = h.headers_; }
 
 //------------------------------------------------------------------------------
+HeadersBuilder::HeadersBuilder(HeadersBuilder &&h)
+    : headers_(std::move(h.headers_)) {}
+
+//------------------------------------------------------------------------------
+HeadersBuilder &HeadersBuilder::operator=(HeadersBuilder &&h) {
+    if (&h == this) return *this;
+    headers_ = std::move(h.headers_);
+    return *this;
+}
+
+//------------------------------------------------------------------------------
+HeadersBuilder::HeadersBuilder(const HeadersBuilder &h)
+    : headers_(h.headers_) {}
+
+//------------------------------------------------------------------------------
+HeadersBuilder &HeadersBuilder::operator=(const HeadersBuilder &h) {
+    if (&h == this) return *this;
+    headers_ = h.headers_;
+    return *this;
+}
+
+//------------------------------------------------------------------------------
 Headers HeadersBuilder::build() const { return Headers(*this); }
 
 //------------------------------------------------------------------------------
@@ -56,7 +78,7 @@ HeadersBuilder &HeadersBuilder::set(const std::string &key,
     return *this;
 }
 //------------------------------------------------------------------------------
-std::string HeadersBuilder::get(const std::string &k) {
+std::string HeadersBuilder::get(const std::string &k) const {
     std::string key = tolower(k);
     for (const auto &it : headers_) {
         if (tolower(it.first) == key) return it.second;

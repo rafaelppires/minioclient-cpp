@@ -1,6 +1,37 @@
 #include <httprequest.h>
 
 //------------------------------------------------------------------------------
+// REQUEST BODY
+//------------------------------------------------------------------------------
+RequestBody::RequestBody(const std::string &contentType,
+                         std::vector<char> &&body) {
+    data_ = body;
+}
+//------------------------------------------------------------------------------
+RequestBody::RequestBody(const RequestBody &r)
+    : data_(r.data_), content_type_(r.content_type_) {}
+
+//------------------------------------------------------------------------------
+RequestBody::RequestBody(RequestBody &&r)
+    : data_(std::move(r.data_)), content_type_(std::move(r.content_type_)) {}
+
+//------------------------------------------------------------------------------
+RequestBody &RequestBody::operator=(const RequestBody &r) {
+    if (this == &r) return *this;
+    data_ = r.data_;
+    content_type_ = r.content_type_;
+    return *this;
+}
+
+//------------------------------------------------------------------------------
+RequestBody &RequestBody::operator=(RequestBody &&r) {
+    if (this == &r) return *this;
+    data_ = std::move(r.data_);
+    content_type_ = std::move(content_type_);
+    return *this;
+}
+
+//------------------------------------------------------------------------------
 // REQUEST
 //------------------------------------------------------------------------------
 Request::Request(const RequestBuilder &builder) {
@@ -12,24 +43,34 @@ Request::Request(const RequestBuilder &builder) {
 }
 
 //------------------------------------------------------------------------------
-const HttpUrl &Request::url() { return url_; }
+bool Request::hasBody() const {
+    return !body_.data_.empty();
+}
 
 //------------------------------------------------------------------------------
-const Headers &Request::headers() { return headers_; }
+const ByteArray &Request::body() const {
+    return body_.data_;
+}
 
 //------------------------------------------------------------------------------
-std::string Request::method() { return method_; }
+const HttpUrl &Request::url() const { return url_; }
 
 //------------------------------------------------------------------------------
-std::string Request::header(const std::string &key) {
+const Headers &Request::headers() const { return headers_; }
+
+//------------------------------------------------------------------------------
+std::string Request::method() const { return method_; }
+
+//------------------------------------------------------------------------------
+std::string Request::header(const std::string &key) const {
     return headers_.get(key);
 }
 
 //------------------------------------------------------------------------------
-std::string Request::headerString() { return headers_; }
+std::string Request::headerString() const { return headers_; }
 
 //------------------------------------------------------------------------------
-std::string Request::statusLine() {
+std::string Request::statusLine() const {
     std::string encodedPath = url_.encodedPath();
     std::string encodedQuery = url_.encodedQuery();
     if (!encodedQuery.empty()) {
@@ -37,9 +78,14 @@ std::string Request::statusLine() {
     }
     return method_ + " " + encodedPath + " HTTP/1.1";
 }
+
 //------------------------------------------------------------------------------
-std::string Request::httpHeader() {
-    return statusLine() + "\n" + headerString();
+std::string Request::httpHeader() const {
+    std::string content_length;
+    if (!body_.data_.empty())
+        content_length =
+            "Content-Length: " + std::to_string(body_.data_.size());
+    return statusLine() + "\n" + headerString() + content_length;
 }
 
 //------------------------------------------------------------------------------
@@ -62,8 +108,7 @@ RequestBuilder::RequestBuilder(const Request &request) {
 void RequestBuilder::url(const HttpUrl &url) { url_ = url; }
 
 //------------------------------------------------------------------------------
-void RequestBuilder::method(const std::string &method,
-                            const RequestBody &body) {
+void RequestBuilder::method(const std::string &method, RequestBody &&body) {
     method_ = method;
     body_ = body;
 }

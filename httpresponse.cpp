@@ -5,6 +5,24 @@
 // RESPONSE
 //------------------------------------------------------------------------------
 Response::Response() : code_(-1) {}
+//------------------------------------------------------------------------------
+Response::Response(Response &&r)
+    : code_(std::move(r.code_)),
+      body_(std::move(r.body_)),
+      protocol_(std::move(r.protocol_)),
+      message_(std::move(r.message_)),
+      headers_(std::move(r.headers_)) {}
+
+//------------------------------------------------------------------------------
+Response &Response::operator=(Response &&r) {
+    if (this == &r) return *this;
+    code_ = std::move(r.code_);
+    body_ = std::move(r.body_);
+    protocol_ = std::move(r.protocol_);
+    message_ = std::move(r.message_);
+    headers_ = std::move(r.headers_);
+    return *this;
+}
 
 //------------------------------------------------------------------------------
 Response::Response(const ResponseBuilder &builder) {
@@ -50,6 +68,44 @@ ResponseBuilder::ResponseBuilder(const Response &response) {
 }
 
 //------------------------------------------------------------------------------
+ResponseBuilder::ResponseBuilder(ResponseBuilder &&r)
+    : code_(std::move(r.code_)),
+      body_(std::move(r.body_)),
+      protocol_(std::move(r.protocol_)),
+      message_(std::move(r.message_)),
+      headers_(std::move(r.headers_)) {}
+
+//------------------------------------------------------------------------------
+ResponseBuilder::ResponseBuilder(const ResponseBuilder &r)
+    : code_(r.code_),
+      body_(r.body_),
+      protocol_(r.protocol_),
+      message_(r.message_),
+      headers_(r.headers_) {}
+
+//------------------------------------------------------------------------------
+ResponseBuilder &ResponseBuilder::operator=(ResponseBuilder &&r) {
+    if (this == &r) return *this;
+    code_ = std::move(r.code_);
+    body_ = std::move(r.body_);
+    protocol_ = std::move(r.protocol_);
+    message_ = std::move(r.message_);
+    headers_ = std::move(r.headers_);
+    return *this;
+}
+
+//------------------------------------------------------------------------------
+ResponseBuilder &ResponseBuilder::operator=(const ResponseBuilder &r) {
+    if (this == &r) return *this;
+    code_ = r.code_;
+    body_ = r.body_;
+    protocol_ = r.protocol_;
+    message_ = r.message_;
+    headers_ = r.headers_;
+    return *this;
+}
+
+//------------------------------------------------------------------------------
 Response ResponseBuilder::build() {
     // if (request_.empty()) throw new IllegalStateException("request == null");
     if (protocol_.empty()) throw IllegalStateException("no protocol");
@@ -90,5 +146,19 @@ ResponseBuilder &ResponseBuilder::headers(const HeadersBuilder &hb) {
 ResponseHeader::ResponseHeader() {}
 //------------------------------------------------------------------------------
 ResponseHeader::ResponseHeader(const Headers &) {}
+
+//------------------------------------------------------------------------------
+// HTTP RESPONSE
+//------------------------------------------------------------------------------
+HttpResponse::HttpResponse(HttpResponse &&r)
+    : header_(std::move(r.header_)), response_(std::move(r.response_)) {}
+
+//------------------------------------------------------------------------------
+HttpResponse &HttpResponse::operator=(HttpResponse &&r) {
+    if (this == &r) return *this;
+    header_ = std::move(r.header_);
+    response_ = std::move(r.response_);
+    return *this;
+}
 
 //------------------------------------------------------------------------------

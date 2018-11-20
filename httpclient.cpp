@@ -7,7 +7,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
 #include <unistd.h>
 
 //------------------------------------------------------------------------------
@@ -51,11 +50,9 @@ Call HttpClient::newCall(const Request &r) { return Call(*this, r); }
 //------------------------------------------------------------------------------
 Response HttpClient::dispatch(Call &call) {
     Response empty;
-    Request &r = call.request_;
-    const HttpUrl &url = r.url();
-
     int sock;
     auto it = connections_.end();
+    const HttpUrl &url = call.request_.url();
     if ((it = connections_.find(url.toString())) == connections_.end()) {
         if ((sock = connect(url.host(), url.port())) > 0)
             connections_[url.toString()] = sock;
@@ -65,21 +62,7 @@ Response HttpClient::dispatch(Call &call) {
         sock = it->second;
     }
 
-    std::string msg = r.httpHeader() + "\r\n\r\n";
-    send(sock, msg.data(), msg.size(), 0);
-
-    if (r.method() == "HEAD") decoder_.setHead();
-    do {
-        char buffer[1024] = {0};
-        int len = recv(sock, buffer, sizeof(buffer), 0);
-        if (len < 0)
-            throw std::runtime_error("IO error");
-        else if (len == 0)
-            throw std::runtime_error("Remote closed connection");
-        decoder_.addChunk(std::string(buffer, len));
-    } while (!decoder_.ready());
-
-    return decoder_.get();
+    return decoder_.requestReply(sock, call.request_);
 }
 
 //------------------------------------------------------------------------------

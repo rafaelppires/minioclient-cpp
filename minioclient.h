@@ -60,31 +60,30 @@ class MinioClient {
     */
    private:
     std::string putObject(const std::string &bucketName,
-                          const std::string &objectName, int length,
-                          const ByteArray &data, const std::string &uploadId,
+                          const std::string &objectName,
+                          ByteArray &data, const std::string &uploadId,
                           int partNumber, const KeyValueMap &headerMap);
     void putObject(const std::string &bucketName, const std::string &objectName,
-                   long size, const ByteArray &data, KeyValueMap headerMap,
-                   ServerSideEncryption *sse);
+                   ByteArray &data, KeyValueMap headerMap,
+                   const ServerSideEncryption &sse);
 
     HttpResponse executePut(const std::string &bucketName,
                             const std::string &objectName,
                             const KeyValueMap &headerMap,
                             const KeyValueMap &queryParamMap,
-                            const std::string &region, const ByteArray &data,
-                            int length);
+                            const std::string &region, ByteArray &data);
     HttpResponse executePut(const std::string &bucketName,
                             const std::string &objectName,
                             const KeyValueMap &headerMap,
                             const KeyValueMap &queryParamMap,
-                            const ByteArray &data, int length);
+                            ByteArray &data);
 
     HttpResponse execute(Method method, const std::string &region,
                          const std::string &bucketName,
                          const std::string &objectName,
                          const KeyValueMap &headerMap,
                          const KeyValueMap &queryParamMap,
-                         const ByteArray &body);
+                         ByteArray &body);
 
     HttpResponse executeHead(const std::string &bucketName,
                              const std::string &objectName);
@@ -98,7 +97,7 @@ class MinioClient {
                           const KeyValueMap &headerMap,
                           const KeyValueMap &queryParamMap,
                           const std::string &contentType,
-                          const ByteArray &body);
+                          ByteArray &body);
     void checkBucketName(const std::string &name);
 
     ErrorResponseException handleError(const std::string &objectName,

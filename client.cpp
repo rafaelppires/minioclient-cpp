@@ -16,12 +16,12 @@ int main() {
         } else {
             minioClient.makeBucket(bucket);
         }
-/*
+
         std::string filepath = "client.cpp", remotename = "content.txt";
         minioClient.putObject(bucket, remotename, filepath);
         std::cout << filepath + " is successfully uploaded as '" + remotename +
-                         "' to '" + bucket + "' bucket.";
-*/
+                         "' to '" + bucket + "' bucket."
+                  << std::endl;
     } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
     }

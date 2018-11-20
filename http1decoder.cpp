@@ -1,5 +1,6 @@
 #include <http1decoder.h>
 #include <minioexceptions.h>
+#include <sys/socket.h>
 
 //------------------------------------------------------------------------------
 // HTTP1 DECODER
@@ -7,6 +8,29 @@
 const std::string Http1Decoder::crlf = "\r\n";
 //------------------------------------------------------------------------------
 Http1Decoder::Http1Decoder() : s_(START), head_(false) {}
+
+//------------------------------------------------------------------------------
+Response Http1Decoder::requestReply(int sock, const Request& r) {
+    if (r.method() == "HEAD") head_ = true;
+    std::string msg = r.httpHeader() + crlf + crlf;
+    send(sock, msg.data(), msg.size(), 0);
+    if (r.hasBody()) {
+        const auto& b = r.body();
+        send(sock, b.data(), b.size(), 0);
+    }
+
+    do {
+        char buffer[1024] = {0};
+        int len = recv(sock, buffer, sizeof(buffer), 0);
+        if (len < 0)
+            throw std::runtime_error("IO error");
+        else if (len == 0)
+            throw std::runtime_error("Remote closed connection");
+        addChunk(std::string(buffer, len));
+    } while (!ready());
+
+    return get();
+}
 
 //------------------------------------------------------------------------------
 void Http1Decoder::addChunk(const std::string& input) {
@@ -72,7 +96,9 @@ bool Http1Decoder::header_state() {
         return true;  // it's a chunked message, skip BODY case
     } else {
         s_ = BODY;
+        return false; // Content-Length may be 0 (in case buffer_ may be empty)
     }
+
     return buffer_.empty();
 }
 //------------------------------------------------------------------------------
@@ -87,6 +113,9 @@ bool Http1Decoder::body_state() {
                 "'Connection: close' must be provided for code != 1xx 204 or "
                 "304");
         content_len_ = std::stoi(lenstr);
+        if (content_len_ == 0) {
+             reset();
+        }
     } else if (content_len_ == 0 &&
                !buffer_.empty()) {  // single shot due to Connection: close
         response.addBody(buffer_);

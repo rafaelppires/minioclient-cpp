@@ -6,7 +6,7 @@
 
 class ServerSideEncryption {
    public:
-    void marshall(std::map<std::string, std::string> &headers) {}
+    void marshall(std::map<std::string, std::string> &headers) const {}
 };
 
 #endif

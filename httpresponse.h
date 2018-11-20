@@ -33,21 +33,8 @@ class ResponseBuilder;
 class Response {
    public:
     Response();
-    Response(Response &&r)
-        : code_(std::move(r.code_)),
-          body_(std::move(r.body_)),
-          protocol_(std::move(r.protocol_)),
-          message_(std::move(r.message_)),
-          headers_(std::move(r.headers_)) {}
-    Response& operator=(Response &&r) {
-        if(this == &r) return *this;
-        code_ = std::move(r.code_);
-        body_ = std::move(r.body_);
-        protocol_ = std::move(r.protocol_);
-        message_ = std::move(r.message_);
-        headers_ = std::move(r.headers_);
-        return *this;
-    }
+    Response(Response &&r);
+    Response &operator=(Response &&r);
     Response(const ResponseBuilder &);
     bool empty();
     bool isSuccessful();
@@ -67,6 +54,10 @@ class Response {
 class ResponseBuilder {
    public:
     ResponseBuilder() {}
+    ResponseBuilder(const ResponseBuilder &r);
+    ResponseBuilder(ResponseBuilder &&r);
+    ResponseBuilder &operator=(const ResponseBuilder &r);
+    ResponseBuilder &operator=(ResponseBuilder &&r);
     ResponseBuilder(const Response &);
     ResponseBuilder &protocol(const std::string &);
     ResponseBuilder &code(int);
@@ -101,16 +92,8 @@ class ResponseHeader {
 class HttpResponse {
    public:
     HttpResponse() {}
-    HttpResponse(HttpResponse &&r)
-        : header_(std::move(r.header_)), response_(std::move(r.response_)) {}
-    HttpResponse& operator=(HttpResponse &&r) {
-        if( this == &r ) return *this;
-        printf("before: %s\n",r.response_.protocol().c_str());
-        header_ = std::move(r.header_);
-        response_ = std::move(r.response_);
-        printf("after: %s\n",r.response_.protocol().c_str());
-        return *this;
-    }
+    HttpResponse(HttpResponse &&r);
+    HttpResponse &operator=(HttpResponse &&r);
     HttpResponse(const Response &r) : header_(r.headers()) {}
     ResponseHeader header() { return header_; }
 

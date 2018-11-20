@@ -96,7 +96,7 @@ void MinioClient::makeBucket(const std::string &bucketName,
     KeyValueMap empty;
     ByteArray data(configString.begin(), configString.end());
     HttpResponse response =
-        executePut(bucketName, "", empty, empty, US_EAST_1, data, 0);
+        executePut(bucketName, "", empty, empty, US_EAST_1, data);
     // response.body().close();
 }
 
@@ -118,9 +118,10 @@ bool MinioClient::bucketExists(const std::string &bucketName) {
 HttpResponse MinioClient::executeHead(const std::string &bucketName,
                                       const std::string &objectName) {
     KeyValueMap empty;
+    ByteArray empty_body;
     HttpResponse response =
         execute(Method::HEAD, getRegion(bucketName), bucketName, objectName,
-                empty, empty, ByteArray());
+                empty, empty, empty_body);
     // response.body().close();
     return response;
 }
@@ -130,9 +131,10 @@ HttpResponse MinioClient::executeHead(const std::string &bucketName,
                                       const std::string &objectName,
                                       const KeyValueMap &headerMap) {
     KeyValueMap empty;
+    ByteArray empty_body;
     HttpResponse response =
         execute(Method::HEAD, getRegion(bucketName), bucketName, objectName,
-                headerMap, empty, ByteArray());
+                headerMap, empty, empty_body);
     // response.body().close();
     return response;
 }
@@ -162,15 +164,13 @@ void MinioClient::putObject(const std::string &bucketName,
         contentType = Files::probeContentType(filePath);
     }*/
 
-    long size = Files::size(fileName);
-
     ByteArray data = Files::readAll(fileName);
 
     // Set the contentType
     KeyValueMap headerMap;
     headerMap["Content-Type"] = contenttype;
 
-    putObject(bucketName, objectName, size, data, headerMap, nullptr);
+    putObject(bucketName, objectName, data, headerMap, ServerSideEncryption());
 }
 
 //------------------------------------------------------------------------------
@@ -241,8 +241,8 @@ void MinioClient::putObject(const std::string &bucketName,
 #endif
 //------------------------------------------------------------------------------
 std::string MinioClient::putObject(const std::string &bucketName,
-                                   const std::string &objectName, int length,
-                                   const ByteArray &data,
+                                   const std::string &objectName,
+                                   ByteArray &data,
                                    const std::string &uploadId, int partNumber,
                                    const KeyValueMap &headerMap) {
     HttpResponse response;
@@ -253,8 +253,8 @@ std::string MinioClient::putObject(const std::string &bucketName,
         queryParamMap[UPLOAD_ID] = uploadId;
     }
 
-    response = executePut(bucketName, objectName, headerMap, queryParamMap,
-                          data, length);
+    response =
+        executePut(bucketName, objectName, headerMap, queryParamMap, data);
 
     // response.body().close();
     return response.header().etag();
@@ -262,9 +262,9 @@ std::string MinioClient::putObject(const std::string &bucketName,
 
 //------------------------------------------------------------------------------
 void MinioClient::putObject(const std::string &bucketName,
-                            const std::string &objectName, long size,
-                            const ByteArray &data, KeyValueMap headerMap,
-                            ServerSideEncryption *sse) {
+                            const std::string &objectName,
+                            ByteArray &data, KeyValueMap headerMap,
+                            const ServerSideEncryption &sse) {
     bool unknownSize = false;
 
     // Add content type if not already set
@@ -272,19 +272,17 @@ void MinioClient::putObject(const std::string &bucketName,
         headerMap["Content-Type"] = "application/octet-stream";
     }
 
-    if (size < 0) {
+    /*if (size < 0) {
         unknownSize = true;
         size = MAX_OBJECT_SIZE;
-    }
-
-    if (size <= MIN_MULTIPART_SIZE) {
+    }*/
+    if (data.size() <= MIN_MULTIPART_SIZE) {
         // Single put object.
-        if (sse != nullptr) {
-            sse->marshall(headerMap);
-        }
-        putObject(bucketName, objectName, size, data, "", 0, headerMap);
+        sse.marshall(headerMap);
+        putObject(bucketName, objectName, data, "", 0, headerMap);
         return;
-    }
+    } else
+        throw std::runtime_error("Multipart transfer not supported");
 #if 0
     /* Multipart upload */
     int[] rv = calculateMultipartSize(size);
@@ -385,7 +383,7 @@ HttpResponse MinioClient::executePut(const std::string &bucketName,
                                      const KeyValueMap &headerMap,
                                      const KeyValueMap &queryParamMap,
                                      const std::string &region,
-                                     const ByteArray &data, int length) {
+                                     ByteArray &data) {
     HttpResponse response = execute(Method::PUT, region, bucketName, objectName,
                                     headerMap, queryParamMap, data);
     return response;
@@ -396,9 +394,9 @@ HttpResponse MinioClient::executePut(const std::string &bucketName,
                                      const std::string &objectName,
                                      const KeyValueMap &headerMap,
                                      const KeyValueMap &queryParamMap,
-                                     const ByteArray &data, int length) {
+                                     ByteArray &data) {
     return executePut(bucketName, objectName, headerMap, queryParamMap,
-                      getRegion(bucketName), data, length);
+                      getRegion(bucketName), data);
 }
 
 //------------------------------------------------------------------------------
@@ -407,7 +405,7 @@ HttpResponse MinioClient::execute(Method method, const std::string &region,
                                   const std::string &objectName,
                                   const KeyValueMap &headerMap,
                                   const KeyValueMap &queryParamMap,
-                                  const ByteArray &body) {
+                                  ByteArray &body) {
     std::string contentType;
     KeyValueMap::const_iterator found;
     if (headerMap.find("Content-Type") != headerMap.end()) {
@@ -468,7 +466,7 @@ std::string extract(const std::string &source, const std::string &begin_token,
         pos1 += begin_token.size();
         pos2 = source.find(end_token, pos1);
         if (pos2 != std::string::npos) {
-            return source.substr(pos1, pos2-pos1);
+            return source.substr(pos1, pos2 - pos1);
         }
     }
     return "";
@@ -482,12 +480,15 @@ ErrorResponseException MinioClient::handleError(const std::string &objectName,
                 bmsgtag = "<Message>", emsgtag = "</Message>",
                 ecode = extract(message, bcodetag, ecodetag),
                 emsg = extract(message, bmsgtag, emsgtag);
-    if(!ecode.empty() || !emsg.empty())
+    if (!ecode.empty() || !emsg.empty()) {
+        if (traceStream_ != nullptr) {
+            traceStream_->println(END_HTTP);
+        }
         return ErrorResponseException(ecode + ": " + emsg);
+    }
 
     if (traceStream_ != nullptr) {
-        if(!message.empty())
-            traceStream_->println(message);
+        if (!message.empty()) traceStream_->println(message);
         traceStream_->println(END_HTTP);
     }
 #if 0
@@ -576,7 +577,7 @@ Request MinioClient::createRequest(Method method, const std::string &bucketName,
                                    const KeyValueMap &headerMap,
                                    const KeyValueMap &queryParamMap,
                                    const std::string &contentType,
-                                   const ByteArray &body) {
+                                   ByteArray &body) {
     if (bucketName.empty() && !objectName.empty()) {
         throw InvalidBucketNameException(
             NULL_STRING, "null bucket name for object '" + objectName + "'");
@@ -652,13 +653,13 @@ Request MinioClient::createRequest(Method method, const std::string &bucketName,
     bool chunkedUpload = false;
     if (!accessKey_.empty() && !secretKey_.empty()) {
         // Handle putobject specially to use chunked upload.
-        if (method == Method::PUT && !objectName.empty() && !body.empty()) {
+        /*if (method == Method::PUT && !objectName.empty() && !body.empty()) {
             sha256Hash = "STREAMING-AWS4-HMAC-SHA256-PAYLOAD";
             requestBuilder.header("Content-Encoding", "aws-chunked")
                 .header("x-amz-decoded-content-length",
                         std::to_string(body.size()));
             chunkedUpload = true;
-        } else if (url.isHttps()) {
+        } else*/ if (url.isHttps()) {
             // Fix issue #415: No need to compute sha256 if endpoint scheme
             // is HTTPS.
             sha256Hash = "UNSIGNED-PAYLOAD";
@@ -722,13 +723,8 @@ Request MinioClient::createRequest(Method method, const std::string &bucketName,
         body = cis;
     }
 #endif
-
-    RequestBody requestBody;
-    if (!body.empty()) {
-        requestBody = RequestBody::create(contentType, body);
-    }
-
-    requestBuilder.method(method.toString(), requestBody);
+    RequestBody bdy(contentType, std::move(body));
+    requestBuilder.method(method.toString(), std::move(bdy));
     return requestBuilder.build();
 }
 //------------------------------------------------------------------------------

@@ -2,6 +2,7 @@
 #define _HTTP1_DECODER_H_
 
 #include <httpresponse.h>
+#include <httprequest.h>
 #include <deque>
 #include <string>
 
@@ -11,9 +12,7 @@ class Http1Decoder {
     static const std::string crlf;
     Http1Decoder();
     void addChunk(const std::string &input);
-    bool ready() const;
-    void setHead() { head_ = true; }
-    Response get();
+    Response requestReply(int s, const Request &r);
 
    private:
     enum State { START, HEADER, BODY, CHUNKED };
@@ -23,6 +22,8 @@ class Http1Decoder {
     bool body_state();
     bool chunked_state();
     void reset();
+    Response get();
+    bool ready() const;
 
     State s_;
     std::string buffer_;
