@@ -33,7 +33,7 @@ std::string Headers::toString() const {
 }
 
 //------------------------------------------------------------------------------
-std::set<std::string> Headers::names() {
+std::set<std::string> Headers::names() const {
     std::set<std::string> ret;
     for (const auto &kv : headers_) {
         ret.insert(kv.first);

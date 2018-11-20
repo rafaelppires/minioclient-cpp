@@ -16,7 +16,7 @@ class Headers {
     std::string toString() const;
     operator std::string() const { return toString(); }
     std::string get(const std::string &key) const;
-    std::set<std::string> names();
+    std::set<std::string> names() const;
     HeadersBuilder newBuilder() const;
 
    private:

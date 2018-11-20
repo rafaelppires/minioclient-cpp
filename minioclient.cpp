@@ -242,8 +242,8 @@ void MinioClient::putObject(const std::string &bucketName,
 //------------------------------------------------------------------------------
 std::string MinioClient::putObject(const std::string &bucketName,
                                    const std::string &objectName,
-                                   ByteArray &data,
-                                   const std::string &uploadId, int partNumber,
+                                   ByteArray &data, const std::string &uploadId,
+                                   int partNumber,
                                    const KeyValueMap &headerMap) {
     HttpResponse response;
 
@@ -262,8 +262,8 @@ std::string MinioClient::putObject(const std::string &bucketName,
 
 //------------------------------------------------------------------------------
 void MinioClient::putObject(const std::string &bucketName,
-                            const std::string &objectName,
-                            ByteArray &data, KeyValueMap headerMap,
+                            const std::string &objectName, ByteArray &data,
+                            KeyValueMap headerMap,
                             const ServerSideEncryption &sse) {
     bool unknownSize = false;
 
@@ -408,7 +408,7 @@ HttpResponse MinioClient::execute(Method method, const std::string &region,
                                   ByteArray &body) {
     std::string contentType;
     KeyValueMap::const_iterator found;
-    if (headerMap.find("Content-Type") != headerMap.end()) {
+    if ((found = headerMap.find("Content-Type")) != headerMap.end()) {
         contentType = found->second;
     }
 
@@ -659,7 +659,8 @@ Request MinioClient::createRequest(Method method, const std::string &bucketName,
                 .header("x-amz-decoded-content-length",
                         std::to_string(body.size()));
             chunkedUpload = true;
-        } else*/ if (url.isHttps()) {
+        } else*/ if (
+            url.isHttps()) {
             // Fix issue #415: No need to compute sha256 if endpoint scheme
             // is HTTPS.
             sha256Hash = "UNSIGNED-PAYLOAD";
