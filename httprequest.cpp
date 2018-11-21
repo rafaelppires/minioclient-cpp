@@ -82,9 +82,7 @@ std::string Request::statusLine() const {
 //------------------------------------------------------------------------------
 std::string Request::httpHeader() const {
     std::string content_length;
-    if (!body_.data_.empty())
-        content_length =
-            "Content-Length: " + std::to_string(body_.data_.size());
+    content_length = "Content-Length: " + std::to_string(body_.data_.size());
     return statusLine() + "\n" + headerString() + content_length;
 }
 
