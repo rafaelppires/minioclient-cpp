@@ -116,6 +116,12 @@ Response ResponseBuilder::build() {
 }
 
 //------------------------------------------------------------------------------
+ResponseBuilder &ResponseBuilder::appendBody(const std::string &chunk) {
+    body_ += chunk;
+    return *this;
+}
+
+//------------------------------------------------------------------------------
 ResponseBuilder &ResponseBuilder::protocol(const std::string &p) {
     protocol_ = p;
     return *this;
@@ -137,6 +143,11 @@ ResponseBuilder &ResponseBuilder::message(const std::string &m) {
 ResponseBuilder &ResponseBuilder::headers(const HeadersBuilder &hb) {
     headers_ = hb;
     return *this;
+}
+
+//------------------------------------------------------------------------------
+std::string ResponseBuilder::getHeaderValue(const std::string &k) {
+    return headers_.get(k);
 }
 
 //------------------------------------------------------------------------------

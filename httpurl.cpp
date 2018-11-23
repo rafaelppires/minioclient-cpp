@@ -6,7 +6,8 @@ using namespace StringUtils;
 // ESCAPER
 //------------------------------------------------------------------------------
 std::string Escaper::encode(std::string str) {
-    return str = replaceAll(str, "!", "%21");
+    return str = replaceAll(str, " ", "%20");
+    str = replaceAll(str, "!", "%21");
     str = replaceAll(str, "$", "%24");
     str = replaceAll(str, "&", "%26");
     str = replaceAll(str, "'", "%27");
@@ -131,29 +132,41 @@ int UrlBuilder::defaultPort(const std::string &scheme) {
 }
 
 //------------------------------------------------------------------------------
+extern "C" { int printf(const char *,...); }
 UrlBuilder UrlBuilder::parse(const std::string &input) {
     UrlBuilder ret;
     auto slices = split(input, "/");
-    if (!slices.empty()) {
-        ret.scheme_ = slices[0].substr(0, slices[0].size() - 1);
-        if (slices[0] != "http:" && slices[0] != "https:") {
+    if (slices.empty()) return ret;
+    int pos = 0;
+    if (input.find("://") != std::string::npos ) {
+        ret.scheme_ = slices[pos].substr(pos, slices[pos].size() - 1);
+        if (slices[pos] != "http:" && slices[pos] != "https:") {
             throw std::invalid_argument(
                 "Expected URL scheme 'http' or 'https' but was '" +
                 ret.scheme_ + "'");
         }
-    }
-    if (slices.size() > 1) {
-        auto endpoint_slices = split(slices[1], ":");
-        if (endpoint_slices.empty()) {
-            throw std::invalid_argument("No hostname");
+        ++pos;
+        if (slices.size() > 1) {
+            auto endpoint_slices = split(slices[pos], ":");
+            if (endpoint_slices.empty()) {
+                throw std::invalid_argument("No hostname");
+            } else {
+                ret.host(endpoint_slices[0]);
+                if (endpoint_slices.size() > 1) // else standard port
+                    ret.port(std::stoi(endpoint_slices[1]));
+            }
+            ++pos;
         } else {
-            ret.host(endpoint_slices[0]);
-            if (endpoint_slices.size() > 1)
-                ret.port(std::stoi(endpoint_slices[1]));
+            throw std::invalid_argument("No hostname");
         }
-    } else {
-        throw std::invalid_argument("No hostname");
     }
+
+    if( pos < slices.size() )
+        ret.path_segments_.clear();
+
+    for(; pos < slices.size(); ++pos)
+        ret.path_segments_.push_back(slices[pos]);
+
     return ret;
 }
 

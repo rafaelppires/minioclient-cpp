@@ -1,3 +1,4 @@
+#include <libc_mock/libc_proxy.h>
 #include <aws_signer.h>
 #include <digest.h>
 #include <files.h>
@@ -725,7 +726,8 @@ Request MinioClient::createRequest(Method method, const std::string &bucketName,
     }
 #endif
     RequestBody bdy(contentType, std::move(body));
-    requestBuilder.method(method.toString(), std::move(bdy));
+    requestBuilder.method(method.toString());
+    requestBuilder.body(std::move(bdy));
     return requestBuilder.build();
 }
 //------------------------------------------------------------------------------

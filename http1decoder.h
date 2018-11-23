@@ -13,6 +13,10 @@ class Http1Decoder {
     Http1Decoder();
     void addChunk(const std::string &input);
     Response requestReply(int s, const Request &r);
+    Response getResponse();
+    Request getRequest();
+    bool responseReady() const;
+    bool requestReady() const;
 
    private:
     enum State { START, HEADER, BODY, CHUNKED };
@@ -22,14 +26,13 @@ class Http1Decoder {
     bool body_state();
     bool chunked_state();
     void reset();
-    Response get();
-    bool ready() const;
 
     State s_;
     std::string buffer_;
-    std::deque<ResponseBuilder> readyqueue_;
+    std::deque<ResponseBuilder> responsequeue_;
+    std::deque<RequestBuilder> requestqueue_;
     int content_len_;
-    bool body_mustnot_, head_;
+    bool body_mustnot_, head_, request_;
 };
 
 //------------------------------------------------------------------------------
@@ -39,7 +42,8 @@ class StatusLine {
     static StatusLine parse(const std::string &, size_t *pos = nullptr);
 
    private:
-    std::string protocol_, message_;
+    std::string protocol_, message_, uri_;
+    bool request_;
     int code_;
     friend class Http1Decoder;
 };

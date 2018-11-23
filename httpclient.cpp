@@ -2,8 +2,15 @@
 #include <httpresponse.h>
 #include <minioexceptions.h>
 
+#ifndef ENCLAVED
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#else
+#include <my_wrappers.h>
+#include <inet_pton_ntop.h>
+#define htons(n) (((((unsigned short)(n) & 0xFF)) << 8) | (((unsigned short)(n) & 0xFF00) >> 8))
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

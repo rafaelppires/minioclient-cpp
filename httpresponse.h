@@ -53,21 +53,24 @@ class Response {
 //------------------------------------------------------------------------------
 class ResponseBuilder {
    public:
+    // Constructors
     ResponseBuilder() {}
-    ResponseBuilder(const ResponseBuilder &r);
+    ResponseBuilder(const Response &);
+
+    // Copy and move constructors
     ResponseBuilder(ResponseBuilder &&r);
+    ResponseBuilder(const ResponseBuilder &r);
+
+    // Copy and move assignments
     ResponseBuilder &operator=(const ResponseBuilder &r);
     ResponseBuilder &operator=(ResponseBuilder &&r);
-    ResponseBuilder(const Response &);
+
     ResponseBuilder &protocol(const std::string &);
     ResponseBuilder &code(int);
     ResponseBuilder &message(const std::string &);
     ResponseBuilder &headers(const HeadersBuilder &);
-    ResponseBuilder &addBody(const std::string &chunk) {
-        body_ += chunk;
-        return *this;
-    }
-    std::string get(const std::string &k) { return headers_.get(k); }
+    ResponseBuilder &appendBody(const std::string &chunk);
+    std::string getHeaderValue(const std::string &k);
     Response build();
 
    private:

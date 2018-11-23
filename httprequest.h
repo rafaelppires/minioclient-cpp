@@ -1,20 +1,29 @@
 #ifndef _HTTP_REQUEST_H_
 #define _HTTP_REQUEST_H_
 
-#include <httpurl.h>
-#include <httpheaders.h>
 #include <httpcommon.h>
+#include <httpheaders.h>
+#include <httpurl.h>
 
 //------------------------------------------------------------------------------
 class Request;
 class RequestBody {
    public:
+    // Constructors
     RequestBody() {}
-    RequestBody(const RequestBody&);
-    RequestBody& operator=(const RequestBody&);
-    RequestBody(RequestBody&&);
-    RequestBody& operator=(RequestBody&&);
     RequestBody(const std::string &contentType, ByteArray &&body);
+
+    // Copy and move constructors
+    RequestBody(RequestBody &&);
+    RequestBody(const RequestBody &);
+
+    // Copy and move assignments
+    RequestBody &operator=(RequestBody &&);
+    RequestBody &operator=(const RequestBody &);
+
+    // Member functions
+    void append(const std::string &content);
+
    private:
     ByteArray data_;
     std::string content_type_;
@@ -32,6 +41,7 @@ class Request {
     const Headers &headers() const;
     bool hasBody() const;
     const ByteArray &body() const;
+    std::string stringBody() const;
     std::string method() const;
     std::string header(const std::string &) const;
     std::string statusLine() const;
@@ -40,7 +50,7 @@ class Request {
 
    private:
     HttpUrl url_;
-    std::string method_;
+    std::string method_, protocol_;
     Headers headers_;
     RequestBody body_;
     // Map<Class<?>, Object> tags;`
@@ -52,14 +62,19 @@ class RequestBuilder {
    public:
     RequestBuilder();
     RequestBuilder(const Request &);
-    void url(const HttpUrl &);
-    void method(const std::string &method, RequestBody &&body);
+    RequestBuilder &url(const HttpUrl &);
+    RequestBuilder &method(const std::string &method);
+    RequestBuilder &protocol(const std::string &method);
+    RequestBuilder &body(RequestBody &&body);
     RequestBuilder &header(const std::string &key, const std::string &value);
+    RequestBuilder &headers(const HeadersBuilder &);
+    RequestBuilder &appendBody(const std::string &);
+    std::string getHeaderValue(const std::string &key);
     Request build();
 
    private:
     HttpUrl url_;
-    std::string method_;
+    std::string method_, protocol_;
     HeadersBuilder headers_;
     RequestBody body_;
     friend class Request;

@@ -1,6 +1,9 @@
 #include <http1decoder.h>
 #include <minioexceptions.h>
 #include <sys/socket.h>
+#ifdef ENCLAVED
+#include <my_wrappers.h>
+#endif
 
 //------------------------------------------------------------------------------
 // HTTP1 DECODER
@@ -27,15 +30,15 @@ Response Http1Decoder::requestReply(int sock, const Request& r) {
         else if (len == 0)
             throw std::runtime_error("Remote closed connection");
         addChunk(std::string(buffer, len));
-    } while (!ready());
+    } while (!responseReady());
 
-    return get();
+    return getResponse();
 }
 
 //------------------------------------------------------------------------------
 void Http1Decoder::addChunk(const std::string& input) {
     buffer_ += input;
-    //printf(">>>>>>>>>>>>%s<<<<<<<<<<<<\n", buffer_.c_str());
+    // printf(">>>>>>>>>>>>%s<<<<<<<<<<<<\n", buffer_.c_str());
     switch (s_) {
         case START:
             if (start_state()) break;
@@ -53,18 +56,28 @@ void Http1Decoder::addChunk(const std::string& input) {
 
 //------------------------------------------------------------------------------
 bool Http1Decoder::start_state() {
-    s_ = HEADER;  // potentially avoid concurrency issues with ready()
-    readyqueue_.emplace(readyqueue_.end());
-    ResponseBuilder& response = readyqueue_.back();
+    s_ = HEADER;  // potentially avoid concurrency issues with req/rep Ready()
+
     size_t headerstart;
     StatusLine sl = StatusLine::parse(buffer_, &headerstart);
-    response.protocol(sl.protocol_).code(sl.code_).message(sl.message_);
+    request_ = sl.request_;
+
+    if (request_) {
+        requestqueue_.emplace(requestqueue_.end());
+        RequestBuilder& request = requestqueue_.back();
+        request.protocol(sl.protocol_)
+            .method(sl.message_)
+            .url(UrlBuilder::parse("http://0:0" + sl.uri_));
+    } else {
+        responsequeue_.emplace(responsequeue_.end());
+        ResponseBuilder& response = responsequeue_.back();
+        response.protocol(sl.protocol_).code(sl.code_).message(sl.message_);
+        body_mustnot_ = head_ || (sl.code_ >= 100 && sl.code_ < 199) ||
+                        sl.code_ == 204 || sl.code_ == 304;
+        content_len_ = -1;  // < 0 Makes it read Content-Lenght later
+    }
+
     buffer_.erase(0, headerstart);
-
-    body_mustnot_ = head_ || (sl.code_ >= 100 && sl.code_ < 199) ||
-                    sl.code_ == 204 || sl.code_ == 304;
-    content_len_ = -1;
-
     return buffer_.empty();
 }
 
@@ -74,8 +87,14 @@ bool Http1Decoder::header_state() {
     if (headerend == std::string::npos) {
         return true;  // incomplete, wait more data
     }
-    ResponseBuilder& response = readyqueue_.back();
-    response.headers(HeadersBuilder::parse(buffer_.substr(0, headerend)));
+
+    if (request_) {
+        RequestBuilder& request = requestqueue_.back();
+        request.headers(HeadersBuilder::parse(buffer_.substr(0, headerend)));
+    } else {
+        ResponseBuilder& response = responsequeue_.back();
+        response.headers(HeadersBuilder::parse(buffer_.substr(0, headerend)));
+    }
     buffer_.erase(0, headerend + 4);
 
     if (body_mustnot_) {
@@ -83,42 +102,74 @@ bool Http1Decoder::header_state() {
         return true;  // finished
     }
 
-    if (tolower(response.get("Connection")) == "close") {
+if(request_) {
+        RequestBuilder& request = requestqueue_.back();
+    if (tolower(request.getHeaderValue("Connection")) == "close") {
         content_len_ = 0;
         s_ = BODY;
         return false;  // keep reading the body
     }
 
-    if (tolower(response.get("Transfer-Encoding")) == "chunked") {
+    if (tolower(request.getHeaderValue("Transfer-Encoding")) == "chunked") {
         s_ = CHUNKED;
         content_len_ = 0;
         addChunk("");
         return true;  // it's a chunked message, skip BODY case
     } else {
         s_ = BODY;
-        return false; // Content-Length may be 0 (in case buffer_ may be empty)
+        return false;  // Content-Length may be 0 (in case buffer_ may be empty)
+    }
+}else{
+        ResponseBuilder& response = responsequeue_.back();
+    if (tolower(response.getHeaderValue("Connection")) == "close") {
+        content_len_ = 0;
+        s_ = BODY;
+        return false;  // keep reading the body
     }
 
-    return buffer_.empty();
+    if (tolower(response.getHeaderValue("Transfer-Encoding")) == "chunked") {
+        s_ = CHUNKED;
+        content_len_ = 0;
+        addChunk("");
+        return true;  // it's a chunked message, skip BODY case
+    } else {
+        s_ = BODY;
+        return false;  // Content-Length may be 0 (in case buffer_ may be empty)
+    }
+}
 }
 //------------------------------------------------------------------------------
 bool Http1Decoder::body_state() {
-    ResponseBuilder& response = readyqueue_.back();
     if (content_len_ < 0) {
-        std::string lenstr = response.get("Content-Length");
-        if (response.get("Connection") == "close") return true;
+        std::string lenstr; 
+        if (request_) {
+            RequestBuilder& request = requestqueue_.back();
+            lenstr = request.getHeaderValue("Content-Length");
+            if (request.getHeaderValue("Connection") == "close") return true; 
+        } else {
+            ResponseBuilder& response = responsequeue_.back();
+            lenstr = response.getHeaderValue("Content-Length");
+            if (response.getHeaderValue("Connection") == "close") return true;
+        }
         if (lenstr.empty())
             throw IllegalStateException(
                 "Either 'Transfer-Encoding: chunked', 'Content-Length: ' or "
                 "'Connection: close' must be provided for code != 1xx 204 or "
                 "304");
+        printf("body_state: <%s>\n", lenstr.c_str());
         content_len_ = std::stoi(lenstr);
         if (content_len_ == 0) {
-             reset();
+            reset();
         }
     } else if (content_len_ == 0 &&
                !buffer_.empty()) {  // single shot due to Connection: close
-        response.addBody(buffer_);
+        if (request_) {
+            RequestBuilder& request = requestqueue_.back();
+            request.appendBody(buffer_);
+        } else {
+            ResponseBuilder& response = responsequeue_.back();
+            response.appendBody(buffer_);
+        }
         buffer_.clear();
         reset();
     }
@@ -145,8 +196,8 @@ bool Http1Decoder::chunked_state() {
 
     std::string chunk = buffer_.substr(0, pos);
     if (content_len_ >= chunk.size()) {
-        ResponseBuilder& response = readyqueue_.back();
-        response.addBody(chunk);
+        ResponseBuilder& response = responsequeue_.back();
+        response.appendBody(chunk);
         buffer_.erase(0, pos + crlf.size());
         content_len_ -= chunk.size();
     }
@@ -160,20 +211,38 @@ void Http1Decoder::reset() {
 }
 
 //------------------------------------------------------------------------------
-bool Http1Decoder::ready() const {
-    if (readyqueue_.size() > 1)
+bool Http1Decoder::responseReady() const {
+    if (responsequeue_.size() > 1)
         return true;
-    else if (!readyqueue_.empty())
+    else if (!responsequeue_.empty())
         return s_ == START;
     return false;
 }
 
 //------------------------------------------------------------------------------
-Response Http1Decoder::get() {
-    if (!ready()) return Response();
+bool Http1Decoder::requestReady() const {
+    if (requestqueue_.size() > 1)
+        return true;
+    else if (!requestqueue_.empty())
+        return s_ == START;
+    return false;
+}
+
+//------------------------------------------------------------------------------
+Response Http1Decoder::getResponse() {
+    if (!responseReady()) return Response();
     ResponseBuilder ret;
-    std::swap(ret, readyqueue_.front());
-    readyqueue_.pop_front();
+    std::swap(ret, responsequeue_.front());
+    responsequeue_.pop_front();
+    return ret.build();
+}
+
+//------------------------------------------------------------------------------
+Request Http1Decoder::getRequest() {
+    if (!requestReady()) return Request();
+    RequestBuilder ret;
+    std::swap(ret, requestqueue_.front());
+    requestqueue_.pop_front();
     return ret.build();
 }
 
@@ -189,10 +258,25 @@ StatusLine StatusLine::parse(const std::string& in, size_t* lastpos) {
         if (pieces.size() < 3)
             throw IllegalStateException("Invalid status line: '" + statusline +
                                         "'");
-        ret.protocol_ = pieces[0];
-        ret.code_ = std::stoi(pieces[1]);
-        ret.message_ = Joiner::on(" ").join(
-            std::vector<std::string>(pieces.begin() + 2, pieces.end()));
+        std::string first = trim_copy(pieces.front()),
+                    last = trim_copy(pieces.back());
+        if (first.find("HTTP") == 0)
+            ret.request_ = false;
+        else if (last.find("HTTP") == 0)
+            ret.request_ = true;
+        else
+            throw std::runtime_error("StatusLine: only HTTP is supported");
+
+        if (ret.request_) {
+            ret.protocol_ = last;
+            ret.message_ = first;
+            ret.uri_ = pieces[1];
+        } else {
+            ret.protocol_ = first;
+            ret.code_ = std::stoi(pieces[1]);
+            ret.message_ = Joiner::on(" ").join(
+                std::vector<std::string>(pieces.begin() + 2, pieces.end()));
+        }
     } else {
         throw std::runtime_error("StatusLine: illegal input");
     }

@@ -4,6 +4,16 @@
 #include <ctime>
 #include <string>
 
+
+#ifdef ENCLAVED
+#include <libc_mock/libc_proxy.h>
+namespace std {
+using ::time;
+using ::gmtime;
+
+}
+#endif
+
 class DateFormat {
 public:
     enum Format {
