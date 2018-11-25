@@ -7,10 +7,12 @@
 
 #ifdef ENCLAVED
 #include <libc_mock/libc_proxy.h>
+#include <ssl_wrappers.h>
+#define gmtime_r sgx_gmtime_r
+#define time sgx_time
 namespace std {
-using ::time;
-using ::gmtime;
-
+using ::sgx_time;
+using ::sgx_gmtime_r;
 }
 #endif
 

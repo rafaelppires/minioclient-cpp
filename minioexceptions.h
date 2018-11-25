@@ -3,6 +3,7 @@
 
 #include <stdexcept>
 
+class ErrorResponseException;
 class ErrorCode {
    public:
     enum Code {
@@ -50,6 +51,7 @@ class ErrorCode {
 
    private:
     Code e_;
+    friend class ErrorResponseException;
 };
 
 class ErrorResponseException : public std::runtime_error {
@@ -57,9 +59,14 @@ class ErrorResponseException : public std::runtime_error {
     ErrorResponseException(ErrorCode::Code c)
         : code_(c),
           std::runtime_error("Response error: " + ErrorCode::toString(c)) {}
-    ErrorResponseException(const std::string &msg)
-        : code_(ErrorCode::UNKNOWN_ERROR), std::runtime_error(msg) {}
-    ErrorCode errorResponse() const { return code_; }
+    ErrorResponseException(const std::string &ecode, const std::string &msg)
+        : code_(ErrorCode::UNKNOWN_ERROR),
+          std::runtime_error(ecode + ": " + msg) {
+        if (ecode == "NoSuchBucket") code_.e_ = ErrorCode::NO_SUCH_BUCKET;
+    }
+    const ErrorCode &errorResponse() const { return code_; }
+    ErrorCode::Code code() const { return code_.e_; }
+    std::string message() { return what(); }
 
    private:
     ErrorCode code_;

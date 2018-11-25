@@ -6,6 +6,27 @@
 #include <httpurl.h>
 
 //------------------------------------------------------------------------------
+class Method {
+   public:
+    enum Methods { HEAD, PUT, POST };
+    Method(Methods m) : m_(m) {}
+    operator Methods() { return m_; }
+    std::string toString() {
+        switch (m_) {
+            case HEAD:
+                return "HEAD";
+            case PUT:
+                return "PUT";
+            case POST:
+                return "POST";
+        };
+    }
+
+   private:
+    Methods m_;
+};
+
+//------------------------------------------------------------------------------
 class Request;
 class RequestBody {
    public:

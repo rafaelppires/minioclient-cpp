@@ -1,7 +1,7 @@
-#include <libc_mock/libc_proxy.h>
 #include <aws_signer.h>
 #include <digest.h>
 #include <files.h>
+#include <libc_mock/libc_proxy.h>
 #include <logprinter.h>
 #include <minioclient.h>
 #include <minioexceptions.h>
@@ -138,6 +138,30 @@ HttpResponse MinioClient::executeHead(const std::string &bucketName,
                 headerMap, empty, empty_body);
     // response.body().close();
     return response;
+}
+
+//------------------------------------------------------------------------------
+void MinioClient::forwardObject(const Request &request) {
+    const HttpUrl &url = request.url();
+    auto slices = split(url.encodedPath(), "/");
+
+    if (slices.size() != 2)
+        throw std::runtime_error("Mandatory URI: /[BucketName]/[ObjectName]");
+
+    std::string bucketName = slices.front();
+    std::string objectName = slices.back();
+    std::string contentType = request.header("Content-Type");
+    ByteArray data = request.body();
+
+    std::string default_contenttype = "text/plain";
+    const std::string &contenttype =
+        contentType.empty() ? default_contenttype : contentType;
+
+    // Set the contentType
+    KeyValueMap headerMap;
+    headerMap["Content-Type"] = contenttype;
+
+    putObject(bucketName, objectName, data, headerMap, ServerSideEncryption());
 }
 
 //------------------------------------------------------------------------------
@@ -469,7 +493,10 @@ std::string extract(const std::string &source, const std::string &begin_token,
         if (pos2 != std::string::npos) {
             return source.substr(pos1, pos2 - pos1);
         }
-    }
+    } /* else {
+        printf("didn`t find token '%s' in '%s'\n", begin_token.c_str(),
+               source.c_str());
+    } */
     return "";
 }
 //------------------------------------------------------------------------------
@@ -485,7 +512,7 @@ ErrorResponseException MinioClient::handleError(const std::string &objectName,
         if (traceStream_ != nullptr) {
             traceStream_->println(END_HTTP);
         }
-        return ErrorResponseException(ecode + ": " + emsg);
+        return ErrorResponseException(ecode, emsg);
     }
 
     if (traceStream_ != nullptr) {
@@ -707,7 +734,7 @@ Request MinioClient::createRequest(Method method, const std::string &bucketName,
     DateTime date;
     requestBuilder.header("x-amz-date",
                           date.toString(DateFormat::AMZ_DATE_FORMAT));
-    // date.toString(DateFormat.AMZ_DATE_FORMAT));
+// date.toString(DateFormat.AMZ_DATE_FORMAT));
 
 #if 0
     if (chunkedUpload) {

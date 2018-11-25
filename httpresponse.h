@@ -8,40 +8,25 @@
 using namespace StringUtils;
 
 //------------------------------------------------------------------------------
-class Method {
-   public:
-    enum Methods { HEAD, PUT, POST };
-    Method(Methods m) : m_(m) {}
-    operator Methods() { return m_; }
-    std::string toString() {
-        switch (m_) {
-            case HEAD:
-                return "HEAD";
-            case PUT:
-                return "PUT";
-            case POST:
-                return "POST";
-        };
-    }
-
-   private:
-    Methods m_;
-};
-
-//------------------------------------------------------------------------------
 class ResponseBuilder;
 class Response {
    public:
+    // Constructors
     Response();
+    Response(const ResponseBuilder &);
+
+    // Move constructor and assignment
     Response(Response &&r);
     Response &operator=(Response &&r);
-    Response(const ResponseBuilder &);
+
+    // Member functions
     bool empty();
     bool isSuccessful();
     const Headers &headers() const;
     std::string protocol() { return protocol_; }
     const std::string &body() const { return body_; }
     int code() const { return code_; }
+    std::string toString() const;
 
    private:
     int code_;

@@ -49,6 +49,7 @@ class MinioClient {
                    const std::string &fileName, const std::string &contentType);
     void putObject(const std::string &bucketName, const std::string &objectName,
                    const std::string &fileName);
+    void forwardObject(const Request &);
     /*void putObject(const std::string &bucketName, const std::string
     &objectName, std::ifstream &stream, long size, const std::string
     &contentType); void putObject(const std::string &bucketName, const

@@ -41,6 +41,19 @@ Response::Response(const ResponseBuilder &builder) {
 }
 
 //------------------------------------------------------------------------------
+std::string Response::toString() const {
+    bool addcontentlen = false;
+    std::string contentlen = "Content-Lenght";
+    if (headers_.get(contentlen).empty()) {
+        contentlen += ": " + std::to_string(body_.size());
+        addcontentlen = true;
+    }
+    return protocol_ + " " + std::to_string(code_) + " " + message_ + "\r\n" +
+           headers_.toString() + (addcontentlen ? contentlen : "") +
+           "\r\n\r\n" + body_;
+}
+
+//------------------------------------------------------------------------------
 bool Response::empty() { return code_ == -1; }
 
 //------------------------------------------------------------------------------

@@ -19,7 +19,7 @@ class HttpClient {
     std::map<std::string, int> connections_;
     Http1Decoder decoder_;
 
-    int connect(const std::string host, int port);
+    int connect(const std::string &host, int port);
 };
 
 //------------------------------------------------------------------------------
