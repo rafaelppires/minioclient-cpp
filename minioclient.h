@@ -39,6 +39,7 @@ class MinioClient {
     MinioClient(const std::string &endpoint, int port,
                 const std::string &accessKey, const std::string &secretKey,
                 const std::string &region, bool secure, HttpClient *httpClient);
+    ~MinioClient() { delete traceStream_; }
 
     void traceOn(std::basic_ostream<char> &stream);
     void makeBucket(const std::string &bucketName,

@@ -30,7 +30,7 @@ int HttpClient::connect(const std::string &host, int port) {
     struct sockaddr_in serv_addr;
 
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        printf("\n Socket creation error \n");
+        //printf("\n Socket creation error \n");
         return -1;
     }
 
@@ -45,8 +45,8 @@ int HttpClient::connect(const std::string &host, int port) {
     }
 
     if (::connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
-        printf("\nConnection to %s:%d failed : %d\n", host.c_str(), port,
-               errno);
+        //printf("\nConnection to %s:%d failed : %d\n", host.c_str(), port, errno);
+        close(sock);
         return -1;
     } else {
         return sock;

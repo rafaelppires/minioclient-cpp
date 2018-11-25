@@ -1,5 +1,6 @@
 #include <httpresponse.h>
 #include <minioexceptions.h>
+#include <httpcommon.h>
 
 //------------------------------------------------------------------------------
 // RESPONSE
@@ -43,7 +44,7 @@ Response::Response(const ResponseBuilder &builder) {
 //------------------------------------------------------------------------------
 std::string Response::toString() const {
     bool addcontentlen = false;
-    std::string contentlen = "Content-Lenght";
+    std::string contentlen = HttpStrings::content_len;
     if (headers_.get(contentlen).empty()) {
         contentlen += ": " + std::to_string(body_.size());
         addcontentlen = true;
@@ -159,7 +160,7 @@ ResponseBuilder &ResponseBuilder::headers(const HeadersBuilder &hb) {
 }
 
 //------------------------------------------------------------------------------
-std::string ResponseBuilder::getHeaderValue(const std::string &k) {
+std::string ResponseBuilder::getHeaderValue(const std::string &k) const {
     return headers_.get(k);
 }
 

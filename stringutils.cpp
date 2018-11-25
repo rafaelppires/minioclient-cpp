@@ -22,6 +22,7 @@ std::vector<std::string> StringUtils::split(const std::string &str,
         arr.push_back(current);
         current = strtok(NULL, sep.c_str());
     }
+    delete[] cstr;
     return arr;
 }
 

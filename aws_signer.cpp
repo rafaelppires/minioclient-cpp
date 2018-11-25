@@ -27,7 +27,6 @@ Request Signer::signV4(Request request, const std::string &region,
                        const std::string &secretKey) {
     std::string contentSha256 = request.header("x-amz-content-sha256");
     DateTime date = DateTime::parseDateTime(request.header("x-amz-date"));
-
     Signer signer(request, contentSha256, date, region, accessKey, secretKey,
                   "");
     signer.setScope()
@@ -36,10 +35,13 @@ Request Signer::signV4(Request request, const std::string &region,
         .setSigningKey()
         .setSignature()
         .setAuthorization();
-
+try{
     return RequestBuilder(request)
         .header("Authorization", signer.authorization_)
         .build();
+} catch(const std::bad_alloc &e) {
+    exit(0);
+}
 }
 
 //------------------------------------------------------------------------------

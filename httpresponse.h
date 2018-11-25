@@ -36,7 +36,7 @@ class Response {
 };
 
 //------------------------------------------------------------------------------
-class ResponseBuilder {
+class ResponseBuilder : public ReqRepBuilder {
    public:
     // Constructors
     ResponseBuilder() {}
@@ -55,7 +55,7 @@ class ResponseBuilder {
     ResponseBuilder &message(const std::string &);
     ResponseBuilder &headers(const HeadersBuilder &);
     ResponseBuilder &appendBody(const std::string &chunk);
-    std::string getHeaderValue(const std::string &k);
+    std::string getHeaderValue(const std::string &k) const;
     Response build();
 
    private:

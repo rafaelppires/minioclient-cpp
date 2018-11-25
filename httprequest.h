@@ -79,7 +79,7 @@ class Request {
 };
 
 //------------------------------------------------------------------------------
-class RequestBuilder {
+class RequestBuilder : public ReqRepBuilder{
    public:
     RequestBuilder();
     RequestBuilder(const Request &);
@@ -90,7 +90,7 @@ class RequestBuilder {
     RequestBuilder &header(const std::string &key, const std::string &value);
     RequestBuilder &headers(const HeadersBuilder &);
     RequestBuilder &appendBody(const std::string &);
-    std::string getHeaderValue(const std::string &key);
+    std::string getHeaderValue(const std::string &key) const;
     Request build();
 
    private:

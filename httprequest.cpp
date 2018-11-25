@@ -1,5 +1,7 @@
 #include <httprequest.h>
 
+extern "C" { extern void exit(int); }
+
 //------------------------------------------------------------------------------
 // REQUEST BODY
 //------------------------------------------------------------------------------
@@ -40,12 +42,16 @@ void RequestBody::append(const std::string &content) {
 // REQUEST
 //------------------------------------------------------------------------------
 Request::Request(const RequestBuilder &builder)  {
+try{
     url_ = builder.url_;
     method_ = builder.method_;
     headers_ = builder.headers_.build();
     body_ = builder.body_;
     protocol_ = builder.protocol_;
     // tags = Util.immutableMap(builder.tags);
+} catch(const std::bad_alloc &e) {
+    exit(2);
+}
 }
 
 //------------------------------------------------------------------------------
@@ -100,6 +106,7 @@ RequestBuilder::RequestBuilder() : protocol_("HTTP/1.1") {}
 
 //------------------------------------------------------------------------------
 RequestBuilder::RequestBuilder(const Request &request) {
+try {
     url_ = request.url_;
     method_ = request.method_;
     body_ = request.body_;
@@ -108,6 +115,9 @@ RequestBuilder::RequestBuilder(const Request &request) {
     //    ? Collections.<Class<?>, Object>emptyMap()
     //    : new LinkedHashMap<>(request.tags);
     headers_ = request.headers_.newBuilder();
+} catch(const std::bad_alloc &e) {
+    exit(1);
+}
 }
 
 //------------------------------------------------------------------------------
@@ -147,15 +157,19 @@ RequestBuilder &RequestBuilder::appendBody(const std::string &content) {
 }
 
 //------------------------------------------------------------------------------
-std::string RequestBuilder::getHeaderValue(const std::string &k) {
+std::string RequestBuilder::getHeaderValue(const std::string &k) const {
     return headers_.get(k);
 }
 
 //------------------------------------------------------------------------------
 RequestBuilder &RequestBuilder::header(const std::string &key,
                                        const std::string &value) {
+try{
     headers_.set(key, value);
     return *this;
+} catch(const std::bad_alloc &e) {
+    exit(4);
+}
 }
 
 //------------------------------------------------------------------------------

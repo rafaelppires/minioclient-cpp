@@ -33,6 +33,7 @@ class Http1Decoder {
     std::deque<RequestBuilder> requestqueue_;
     int content_len_;
     bool body_mustnot_, head_, request_;
+    size_t decoded_messages_;
 };
 
 //------------------------------------------------------------------------------
