@@ -1,7 +1,5 @@
-#include <errno.h>
 #include <http1decoder.h>
 #include <minioexceptions.h>
-#include <sys/socket.h>
 #ifdef ENCLAVED
 #include <my_wrappers.h>
 #endif
@@ -14,24 +12,25 @@ const std::string Http1Decoder::crlf = "\r\n";
 Http1Decoder::Http1Decoder() : s_(START), head_(false), decoded_messages_(0) {}
 
 //------------------------------------------------------------------------------
-Response Http1Decoder::requestReply(int sock, const Request& r) {
+Response Http1Decoder::requestReply(EndpointConnection &connection, const Request& r) {
     if (r.method() == "HEAD") head_ = true;
     std::string msg = r.httpHeader() + crlf + crlf;
-    send(sock, msg.data(), msg.size(), 0);
+    connection.send(msg.data(), msg.size());
     if (r.hasBody()) {
         const auto& b = r.body();
-        if (send(sock, b.data(), b.size(), 0) < 0)
+        if (connection.send(b.data(), b.size()) < 0)
             throw std::runtime_error("send: error " + std::to_string(errno));
     }
 
     do {
         char buffer[1024] = {0};
-        int len = recv(sock, buffer, sizeof(buffer), 0);
+        int len = connection.recv(buffer, sizeof(buffer));
         if (len < 0)
             throw std::runtime_error("recv: error " + std::to_string(errno));
-        else if (len == 0)
-            throw std::runtime_error("Remote closed connection " +
-                                     std::to_string(sock));
+        else if (len == 0) {
+            connection.~EndpointConnection();
+            throw std::runtime_error("Remote closed connection ");
+        }
         addChunk(std::string(buffer, len));
     } while (!responseReady());
 

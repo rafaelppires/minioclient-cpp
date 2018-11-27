@@ -16,10 +16,8 @@ class HttpClient {
     Response dispatch(Call &);
 
    private:
-    std::map<std::string, int> connections_;
+    std::map<std::string, EndpointConnection*> connections_;
     Http1Decoder decoder_;
-
-    int connect(const std::string &host, int port);
 };
 
 //------------------------------------------------------------------------------

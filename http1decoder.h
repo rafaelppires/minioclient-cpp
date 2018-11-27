@@ -3,6 +3,7 @@
 
 #include <httpresponse.h>
 #include <httprequest.h>
+#include <tcpconnection.h>
 #include <deque>
 #include <string>
 
@@ -12,7 +13,7 @@ class Http1Decoder {
     static const std::string crlf;
     Http1Decoder();
     void addChunk(const std::string &input);
-    Response requestReply(int s, const Request &r);
+    Response requestReply(EndpointConnection&, const Request &r);
     Response getResponse();
     Request getRequest();
     bool responseReady() const;

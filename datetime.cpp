@@ -1,5 +1,13 @@
 #include <datetime.h>
 //------------------------------------------------------------------------------
+#ifdef ENCLAVED
+struct tm* std::gmtime(std::time_t *in) {
+    static struct tm ret;
+    ::sgx_gmtime_r(in, &ret);
+    return &ret;
+} 
+#endif
+//------------------------------------------------------------------------------
 std::string DateTime::toString(DateFormat::Format f) {
     char tstr[100];
     const char *format;
@@ -12,9 +20,7 @@ std::string DateTime::toString(DateFormat::Format f) {
             break;
     };
 
-    struct tm gmtimestamp;
-    std::gmtime_r(&time_,&gmtimestamp);
-    if (std::strftime(tstr, sizeof(tstr), format, &gmtimestamp)) {
+    if (std::strftime(tstr, sizeof(tstr), format, std::gmtime(&time_))) {
         return tstr;
     }
 

@@ -1,7 +1,9 @@
+#ifdef ENCLAVED
+#include <libc_mock/libc_proxy.h>
+#endif
 #include <aws_signer.h>
 #include <digest.h>
 #include <files.h>
-#include <libc_mock/libc_proxy.h>
 #include <logprinter.h>
 #include <minioclient.h>
 #include <minioexceptions.h>
