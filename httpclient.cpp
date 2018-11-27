@@ -32,8 +32,10 @@ int HttpClient::connect(const std::string &host, int port) {
     hints.ai_socktype = SOCK_STREAM;
 
     struct addrinfo *res, *it;
-    if (getaddrinfo(host.c_str(), std::to_string(port).c_str(), &hints, &res)) {
-        printf("Address resolution error: '%s'\n", host.c_str());
+    int errorcode;
+    if ((errorcode = getaddrinfo(host.c_str(), std::to_string(port).c_str(),
+                                 &hints, &res))) {
+        printf("Address resolution error %d: '%s'\n", errorcode, host.c_str());
         return -1;
     }
 
