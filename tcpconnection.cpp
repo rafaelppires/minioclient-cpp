@@ -18,6 +18,11 @@
 //------------------------------------------------------------------------------
 // PLAIN CONNECTION
 //------------------------------------------------------------------------------
+PlainConnection::~PlainConnection() {
+    close();
+}
+
+//------------------------------------------------------------------------------
 bool PlainConnection::connect(const std::string &host, int port) {
     socket = getsocket(host, port);
     return socket > 0;
@@ -38,6 +43,19 @@ int PlainConnection::recv(char *buff, size_t len) {
 //------------------------------------------------------------------------------
 #include <openssl/err.h>
 SSL_CTX *TlsConnection::context = 0;
+//------------------------------------------------------------------------------
+TlsConnection::~TlsConnection() {
+    close();
+}
+
+//------------------------------------------------------------------------------
+void TlsConnection::close() {
+    SSL_shutdown(ssl_);
+    SSL_free(ssl_);
+    ssl_ = nullptr;
+    EndpointConnection::close();
+}
+
 //------------------------------------------------------------------------------
 const char *TlsConnection::err_str(int e) {
     switch (e) {
@@ -154,8 +172,7 @@ bool TlsConnection::connect(const std::string &host, int port) {
             r = SSL_get_error(cli, r);
             printf("%s: %s\n", err_str(r),
                    ERR_error_string(ERR_get_error(), nullptr));
-            close(socket);
-            socket = -1;
+            close();
             return false;
         }
         ssl_ = cli;
@@ -199,7 +216,7 @@ int EndpointConnection::getsocket(const std::string &host, int port) {
         }
 
         if (::connect(sock, it->ai_addr, it->ai_addrlen) < 0) {
-            close(sock);
+            ::close(sock);
             printf("TCP Connection failed: %d\n", errno);
             continue;
         }
@@ -225,5 +242,10 @@ bool EndpointConnection::connect(EndpointConnection **endpoint,
     return true;
 }
 
-
+//------------------------------------------------------------------------------
+void EndpointConnection::close() {
+    if( socket > 0 )
+        ::close(socket);
+    socket = -1;
+}
 

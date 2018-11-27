@@ -8,9 +8,11 @@
 //------------------------------------------------------------------------------
 class EndpointConnection {
 public:
+    virtual ~EndpointConnection() {}
     virtual int send( const char *buff, size_t len ) = 0;
     virtual int recv( char *buff, size_t len ) = 0;
     virtual bool connect( const std::string &host, int port ) = 0;
+    virtual void close();
 
     static bool connect( EndpointConnection **endpoint, const HttpUrl &url );
 protected:
@@ -21,10 +23,12 @@ protected:
 //------------------------------------------------------------------------------
 class TlsConnection : public EndpointConnection {
 public:
+    virtual ~TlsConnection();
     TlsConnection() : ssl_(nullptr) {}
     bool connect( const std::string &host, int port );
     int send( const char *buff, size_t len );
     int recv( char *buff, size_t len );
+    void close();
 private:
     SSL *ssl_;
     static const char *err_str(int e);
@@ -41,6 +45,7 @@ private:
 //------------------------------------------------------------------------------
 class PlainConnection : public EndpointConnection {
 public:
+    virtual ~PlainConnection();
     bool connect( const std::string &host, int port );
     int send( const char *buff, size_t len );
     int recv( char *buff, size_t len );
