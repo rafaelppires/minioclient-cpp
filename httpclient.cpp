@@ -27,30 +27,31 @@ HttpClient::HttpClient() {}
 int HttpClient::connect(const std::string &host, int port) {
     struct sockaddr_in address;
     int sock = 0;
-    struct sockaddr_in serv_addr;
 
-    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        //printf("\n Socket creation error \n");
+    struct addrinfo hints;
+    hints.ai_socktype = SOCK_STREAM;
+
+    struct addrinfo *res, *it;
+    if (getaddrinfo(host.c_str(), std::to_string(port).c_str(), &hints, &res)) {
+        printf("Address resolution error: '%s'\n", host.c_str());
         return -1;
     }
 
-    memset(&serv_addr, '0', sizeof(serv_addr));
+    for (it = res; it != nullptr; it = it->ai_next) {
+        if ((sock = socket(it->ai_family, it->ai_socktype, it->ai_protocol)) <
+            0) {
+            printf("Error getting socket: %d\n", errno);
+            continue;
+        }
 
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(port);
-    // Convert IPv4 and IPv6 addresses from text to binary form
-    if (inet_pton(AF_INET, host.c_str(), &serv_addr.sin_addr) <= 0) {
-        printf("Invalid address: '%s'\n", host.c_str());
-        return -1;
+        if (::connect(sock, it->ai_addr, it->ai_addrlen) < 0) {
+            printf("Connection failed: %d\n", errno);
+            continue;
+        }
+        break;
     }
 
-    if (::connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
-        //printf("\nConnection to %s:%d failed : %d\n", host.c_str(), port, errno);
-        close(sock);
-        return -1;
-    } else {
-        return sock;
-    }
+    return it == nullptr ? -2 : sock;
 }
 
 //------------------------------------------------------------------------------
