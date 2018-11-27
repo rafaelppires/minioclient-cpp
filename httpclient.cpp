@@ -28,13 +28,10 @@ int HttpClient::connect(const std::string &host, int port) {
     struct sockaddr_in address;
     int sock = 0;
 
-    struct addrinfo hints;
-    hints.ai_socktype = SOCK_STREAM;
-
     struct addrinfo *res, *it;
     int errorcode;
     if ((errorcode = getaddrinfo(host.c_str(), std::to_string(port).c_str(),
-                                 &hints, &res))) {
+                                 nullptr, &res))) {
         printf("Address resolution error %d: '%s'\n", errorcode, host.c_str());
         return -1;
     }
