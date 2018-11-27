@@ -40,7 +40,7 @@ int HttpClient::connect(const std::string &host, int port) {
     serv_addr.sin_port = htons(port);
     // Convert IPv4 and IPv6 addresses from text to binary form
     if (inet_pton(AF_INET, host.c_str(), &serv_addr.sin_addr) <= 0) {
-        printf("\nInvalid address/ Address not supported \n");
+        printf("Invalid address: '%s'\n", host.c_str());
         return -1;
     }
 
