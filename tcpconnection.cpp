@@ -50,9 +50,11 @@ TlsConnection::~TlsConnection() {
 
 //------------------------------------------------------------------------------
 void TlsConnection::close() {
-    SSL_shutdown(ssl_);
-    SSL_free(ssl_);
-    ssl_ = nullptr;
+    if( ssl_ != nullptr ) {
+        SSL_shutdown(ssl_);
+        SSL_free(ssl_);
+        ssl_ = nullptr;
+    }
     EndpointConnection::close();
 }
 
@@ -166,7 +168,7 @@ bool TlsConnection::connect(const std::string &host, int port) {
         SSL *cli = SSL_new(context);
         SSL_set_fd(cli, socket);
         ERR_clear_error();
-        int r = SSL_accept(cli);
+        int r = SSL_connect(cli);
         if (r <= 0) {
             SSL_free(cli);
             r = SSL_get_error(cli, r);
