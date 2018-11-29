@@ -6,6 +6,7 @@
 
 #ifdef ENCLAVED
 #include <libc_mock/libc_proxy.h>
+#undef gettimeofday
 #include <ssl_wrappers.h>
 #define time sgx_time
 namespace std {

@@ -1,9 +1,15 @@
 #ifndef _TCP_CONNECTION_H_
 #define _TCP_CONNECTION_H_
 
+#ifdef ENCLAVED
+#include <libc_mock/libc_proxy.h>
+#endif
 #include <openssl/ssl.h>
 #include <string>
 #include <httpurl.h>
+#ifdef ENCLAVED
+#undef connect
+#endif
 
 //------------------------------------------------------------------------------
 class EndpointConnection {

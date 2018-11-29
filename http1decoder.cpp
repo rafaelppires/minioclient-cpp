@@ -1,5 +1,6 @@
 #include <http1decoder.h>
 #include <minioexceptions.h>
+#include <errno.h>
 #ifdef ENCLAVED
 #include <my_wrappers.h>
 #endif

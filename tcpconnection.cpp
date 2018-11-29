@@ -2,6 +2,7 @@
 #include <sys/socket.h>
 #include <errno.h>
 #include <unistd.h>
+#include <openssl/err.h>
 #ifdef ENCLAVED
 #include <inet_pton_ntop.h>
 #include <my_wrappers.h>
@@ -13,7 +14,6 @@
 #include <netinet/in.h>
 #include <sys/types.h>
 #endif
-
 
 //------------------------------------------------------------------------------
 // PLAIN CONNECTION
@@ -41,7 +41,6 @@ int PlainConnection::recv(char *buff, size_t len) {
 //------------------------------------------------------------------------------
 // TLS CONNECTION
 //------------------------------------------------------------------------------
-#include <openssl/err.h>
 SSL_CTX *TlsConnection::context = 0;
 //------------------------------------------------------------------------------
 TlsConnection::~TlsConnection() {
@@ -154,7 +153,6 @@ void TlsConnection::init_openssl(SSL_CTX **ctx) {
     OpenSSL_add_all_ciphers();
     SSL_load_error_strings();
 
-    printf("%s\n", SSLeay_version(SSLEAY_VERSION));
     *ctx = create_context();
     SSL_CTX_set_ecdh_auto(*ctx, 1);
     configure_context(*ctx);
@@ -250,4 +248,6 @@ void EndpointConnection::close() {
         ::close(socket);
     socket = -1;
 }
+
+//------------------------------------------------------------------------------
 
