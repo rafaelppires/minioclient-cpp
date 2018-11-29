@@ -39,7 +39,7 @@ std::string Digest::base64_encode(const T &data) {
     BIO_write(bio, data.data(), data.size());
     BIO_flush(bio);
     BIO_get_mem_ptr(bio, &bufferPtr);
-    ret = bufferPtr->data;
+    ret = std::string(bufferPtr->data, bufferPtr->length);
     BIO_free_all(bio);
     return ret;
 }

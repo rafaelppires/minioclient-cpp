@@ -22,13 +22,13 @@ Response HttpClient::dispatch(Call &call) {
     int sock;
     auto it = connections_.end();
     const HttpUrl &url = call.request_.url();
-    printf("url: %s\n", url.baseUrl().c_str());
     EndpointConnection *endpoint;
     if ((it = connections_.find(url.baseUrl())) == connections_.end()) {
-        if (EndpointConnection::connect(&endpoint, url))
+        if (EndpointConnection::connect(&endpoint, url)) {
             connections_[url.baseUrl()] = endpoint;
-        else
+        } else {
             return empty;
+        }
     } else {
         endpoint = it->second;
     }

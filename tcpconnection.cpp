@@ -126,7 +126,7 @@ SSL_CTX *TlsConnection::create_context() {
     const SSL_METHOD *method;
     SSL_CTX *ctx;
 
-    method = TLSv1_2_server_method();
+    method = TLSv1_2_method();
 
     ctx = SSL_CTX_new(method);
     if (!ctx) {
