@@ -35,13 +35,9 @@ Request Signer::signV4(Request request, const std::string &region,
         .setSigningKey()
         .setSignature()
         .setAuthorization();
-try{
     return RequestBuilder(request)
         .header("Authorization", signer.authorization_)
         .build();
-} catch(const std::bad_alloc &e) {
-    exit(0);
-}
 }
 
 //------------------------------------------------------------------------------

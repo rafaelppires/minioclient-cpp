@@ -1,6 +1,6 @@
+#include <errno.h>
 #include <http1decoder.h>
 #include <minioexceptions.h>
-#include <errno.h>
 #ifdef ENCLAVED
 #include <my_wrappers.h>
 #endif
@@ -10,10 +10,12 @@
 //------------------------------------------------------------------------------
 const std::string Http1Decoder::crlf = "\r\n";
 //------------------------------------------------------------------------------
-Http1Decoder::Http1Decoder() : s_(START), head_(false), decoded_messages_(0) {}
+Http1Decoder::Http1Decoder()
+    : s_(START), head_(false), body_mustnot_(false), decoded_messages_(0) {}
 
 //------------------------------------------------------------------------------
-Response Http1Decoder::requestReply(EndpointConnection &connection, const Request& r) {
+Response Http1Decoder::requestReply(EndpointConnection& connection,
+                                    const Request& r) {
     if (r.method() == "HEAD") head_ = true;
     std::string msg = r.httpHeader() + crlf + crlf;
     connection.send(msg.data(), msg.size());
@@ -39,6 +41,23 @@ Response Http1Decoder::requestReply(EndpointConnection &connection, const Reques
 }
 
 //------------------------------------------------------------------------------
+std::string Http1Decoder::stateString() {
+    switch (s_) {
+        case START:
+            return "START";
+        case HEADER:
+            return "HEADER";
+        case BODY:
+            return "BODY";
+        case CHUNKED:
+            return "CHUNKED";
+        default:
+            return "UNK";
+    }
+}
+
+//------------------------------------------------------------------------------
+size_t coun = 0;
 void Http1Decoder::addChunk(const std::string& input) {
     buffer_ += input;
     if (buffer_.empty()) {
@@ -46,13 +65,7 @@ void Http1Decoder::addChunk(const std::string& input) {
         return;
     }
 #if 0
-    printf("(%s) --->%s<--\n",
-           (s_ == START
-                ? "START"
-                : (s_ == HEADER
-                       ? "HEADER"
-                       : (s_ == BODY ? "BODY"
-                                     : (s_ == CHUNKED ? "CHUNKED" : "UNK")))),
+    printf(">%lu [%lx] (%s) --->%s<--\n", ++coun, this, stateString().c_str(),
            buffer_.c_str());
 #endif
     do {
@@ -75,6 +88,7 @@ void Http1Decoder::addChunk(const std::string& input) {
 
 //------------------------------------------------------------------------------
 bool Http1Decoder::start_state() {
+    // printf("[%lx] start_state\n", this);
     s_ = HEADER;  // potentially avoid concurrency issues with req/rep Ready()
 
     size_t headerstart;
@@ -102,6 +116,7 @@ bool Http1Decoder::start_state() {
 
 //------------------------------------------------------------------------------
 bool Http1Decoder::header_state() {
+    // printf("[%lx] header_state", this);
     size_t headerend = buffer_.find(crlf + crlf);
     if (headerend == std::string::npos) {
         return true;  // incomplete, wait more data
@@ -139,6 +154,7 @@ bool Http1Decoder::header_state() {
 }
 //------------------------------------------------------------------------------
 bool Http1Decoder::body_state() {
+    // printf("[%lx] body_state", this);
     ReqRepBuilder& reqrep =
         request_ ? reinterpret_cast<ReqRepBuilder&>(requestqueue_.back())
                  : reinterpret_cast<ReqRepBuilder&>(responsequeue_.back());
@@ -200,8 +216,10 @@ bool Http1Decoder::chunked_state() {
 
 //------------------------------------------------------------------------------
 void Http1Decoder::reset() {
+    // printf("---------\n");
     ++decoded_messages_;
     head_ = false;
+    body_mustnot_ = false;
     s_ = START;
 }
 

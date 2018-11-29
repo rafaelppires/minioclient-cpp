@@ -27,6 +27,7 @@ class Http1Decoder {
     bool body_state();
     bool chunked_state();
     void reset();
+    std::string stateString();
 
     State s_;
     std::string buffer_;
