@@ -5,10 +5,9 @@
 #include <my_wrappers.h>
 #endif
 
+using HttpStrings::crlf;
 //------------------------------------------------------------------------------
 // HTTP1 DECODER
-//------------------------------------------------------------------------------
-const std::string Http1Decoder::crlf = "\r\n";
 //------------------------------------------------------------------------------
 Http1Decoder::Http1Decoder()
     : s_(START), head_(false), body_mustnot_(false), decoded_messages_(0) {}

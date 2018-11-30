@@ -1,6 +1,7 @@
 #include <httprequest.h>
+#include <httpcommon.h>
 
-extern "C" { extern void exit(int); }
+using HttpStrings::crlf;
 
 //------------------------------------------------------------------------------
 // REQUEST BODY
@@ -76,6 +77,11 @@ std::string Request::header(const std::string &key) const {
 }
 
 //------------------------------------------------------------------------------
+std::string Request::toString() const {
+    return httpHeader() + crlf + crlf + stringBody();
+}
+
+//------------------------------------------------------------------------------
 std::string Request::headerString() const { return headers_; }
 
 //------------------------------------------------------------------------------
@@ -92,7 +98,7 @@ std::string Request::statusLine() const {
 std::string Request::httpHeader() const {
     std::string content_length;
     content_length = "Content-Length: " + std::to_string(body_.data_.size());
-    return statusLine() + "\n" + headerString() + content_length;
+    return statusLine() + crlf + headerString() + content_length;
 }
 
 //------------------------------------------------------------------------------

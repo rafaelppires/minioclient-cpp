@@ -63,6 +63,7 @@ class Request {
     bool hasBody() const;
     const ByteArray &body() const;
     std::string stringBody() const;
+    std::string toString() const;
     std::string method() const;
     std::string header(const std::string &) const;
     std::string statusLine() const;

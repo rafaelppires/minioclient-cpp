@@ -10,7 +10,6 @@
 //------------------------------------------------------------------------------
 class Http1Decoder {
    public:
-    static const std::string crlf;
     Http1Decoder();
     void addChunk(const std::string &input);
     Response requestReply(EndpointConnection&, const Request &r);
