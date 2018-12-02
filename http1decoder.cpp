@@ -13,33 +13,6 @@ Http1Decoder::Http1Decoder()
     : s_(START), head_(false), body_mustnot_(false), decoded_messages_(0) {}
 
 //------------------------------------------------------------------------------
-Response Http1Decoder::requestReply(EndpointConnection& connection,
-                                    const Request& r) {
-    if (r.method() == "HEAD") head_ = true;
-    std::string msg = r.httpHeader() + crlf + crlf;
-    connection.send(msg.data(), msg.size());
-    if (r.hasBody()) {
-        const auto& b = r.body();
-        if (connection.send(b.data(), b.size()) < 0)
-            throw std::runtime_error("send: error " + std::to_string(errno));
-    }
-
-    do {
-        char buffer[1024] = {0};
-        int len = connection.recv(buffer, sizeof(buffer));
-        if (len < 0)
-            throw std::runtime_error("recv: error " + std::to_string(errno));
-        else if (len == 0) {
-            connection.~EndpointConnection();
-            throw std::runtime_error("Remote closed connection ");
-        }
-        addChunk(std::string(buffer, len));
-    } while (!responseReady());
-
-    return getResponse();
-}
-
-//------------------------------------------------------------------------------
 std::string Http1Decoder::stateString() {
     switch (s_) {
         case START:
@@ -53,6 +26,11 @@ std::string Http1Decoder::stateString() {
         default:
             return "UNK";
     }
+}
+
+//------------------------------------------------------------------------------
+void Http1Decoder::setHead() {
+    head_ = true;
 }
 
 //------------------------------------------------------------------------------

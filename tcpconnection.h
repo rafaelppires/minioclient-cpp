@@ -37,7 +37,7 @@ public:
     void close();
 private:
     SSL *ssl_;
-    static const char *err_str(int e);
+    static const char *sslerr_str(int e);
     static int password_cb(char *buf, int size, int rwflag, void *password);
     static EVP_PKEY *generatePrivateKey();
     static X509 *generateCertificate(EVP_PKEY *pkey);

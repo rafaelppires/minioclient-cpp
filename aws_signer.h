@@ -1,8 +1,8 @@
 #ifndef _AWS_SIGNER_H_
 #define _AWS_SIGNER_H_
 
-#include <httpclient.h>
 #include <httpresponse.h>
+#include <httprequest.h>
 #include <map>
 #include <set>
 #include <datetime.h>

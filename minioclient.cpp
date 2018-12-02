@@ -1,12 +1,10 @@
 #ifdef ENCLAVED
 #include <libc_mock/libc_proxy.h>
 #endif
+#include <minioclient.h>
 #include <aws_signer.h>
 #include <digest.h>
 #include <files.h>
-#include <logprinter.h>
-#include <minioclient.h>
-#include <minioexceptions.h>
 #include <stringutils.h>
 using namespace StringUtils;
 
@@ -34,7 +32,7 @@ MinioClient::MinioClient(const std::string &endpoint, int port,
     }
 
     if (httpClient != nullptr) {
-        httpClient_ = *httpClient;
+        httpClient_ = std::move(*httpClient);
     } /*else {
       httpClient = OkHttpClient();
       httpClient = httpClient.newBuilder()
@@ -459,7 +457,13 @@ HttpResponse MinioClient::execute(Method method, const std::string &region,
         traceStream_->println(headers);
     }
 
-    Response response = httpClient_.newCall(request).execute();
+    Response response;
+    try {
+        response = httpClient_.newCall(request).execute();
+    } catch(const std::exception &e) {
+        printf("MinioClient::execute Error: %s\n", e.what());
+    }
+
     if (response.empty()) {
         if (traceStream_ != nullptr) {
             traceStream_->println("<NO RESPONSE>");
@@ -797,7 +801,7 @@ void MinioClient::checkBucketName(const std::string &name) {
 
 //------------------------------------------------------------------------------
 void MinioClient::traceOn(std::basic_ostream<char> &stream) {
-    if (traceStream_ != nullptr) delete traceStream_;
+    delete traceStream_;
     traceStream_ = new LogPrinter(stream);
 }
 

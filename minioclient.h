@@ -1,13 +1,13 @@
 #ifndef _MINIO_CLIENT_H_
 #define _MINIO_CLIENT_H_
-#include <dataobject.h>
+//#include <dataobject.h>
 #include <httpclient.h>
-#include <httpresponse.h>
+//#include <httpresponse.h>
 #include <logprinter.h>
 #include <minioexceptions.h>
 #include <serversideencryption.h>
-#include <map>
-#include <string>
+//#include <map>
+//#include <string>
 
 class MinioClient {
    public:
@@ -19,6 +19,10 @@ class MinioClient {
     static const std::string DEFAULT_USER_AGENT;
     static const long MAX_OBJECT_SIZE;
     static const int MIN_MULTIPART_SIZE;
+
+    // You shall not copy
+    MinioClient(const MinioClient&) = delete;
+    MinioClient& operator=(const MinioClient&) = delete;
 
     MinioClient(const std::string &endpoint, const std::string &accessKey,
                 const std::string &secretKey)

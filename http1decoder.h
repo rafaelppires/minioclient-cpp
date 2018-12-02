@@ -17,6 +17,7 @@ class Http1Decoder {
     Request getRequest();
     bool responseReady() const;
     bool requestReady() const;
+    void setHead();
 
    private:
     enum State { START, HEADER, BODY, CHUNKED };
