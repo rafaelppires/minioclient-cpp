@@ -15,9 +15,11 @@ class Response {
     Response();
     Response(const ResponseBuilder &);
 
-    // Move constructor and assignment
-    Response(Response &&r);
-    Response &operator=(Response &&r);
+    // Move/Copy constructors and assignment
+    Response(Response &&r) = default;
+    Response(const Response &r) = default;
+    Response &operator=(Response &&r) = default;
+    Response &operator=(const Response &r) = default;
 
     // Member functions
     bool empty();

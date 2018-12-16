@@ -95,6 +95,11 @@ UrlBuilder HttpUrl::newBuilder() {
 UrlBuilder::UrlBuilder() : port_(-1) { path_segments_.push_back(""); }
 
 //------------------------------------------------------------------------------
+UrlBuilder::UrlBuilder(const HttpUrl&u) {
+    *this = parse(u.toString());
+}
+
+//------------------------------------------------------------------------------
 std::string UrlBuilder::toString() const {
     std::string ret;
     if (scheme_.empty())
@@ -108,6 +113,13 @@ std::string UrlBuilder::toString() const {
             ret += ":" + std::to_string(p);
     }
     for (const auto &seg : path_segments_) ret += "/" + seg;
+    if (!encoded_query_params_.empty()) {
+        ret += '?';
+        for (const auto &kv: encoded_query_params_) {
+            ret += kv.first + '=' + kv.second + '&';
+        }
+        ret.pop_back();
+    }
     return ret;
 }
 
@@ -137,7 +149,6 @@ int UrlBuilder::defaultPort(const std::string &scheme) {
 }
 
 //------------------------------------------------------------------------------
-extern "C" { int printf(const char *,...); }
 UrlBuilder UrlBuilder::parse(const std::string &input) {
     UrlBuilder ret;
     auto slices = split(input, "/");
@@ -176,9 +187,10 @@ UrlBuilder UrlBuilder::parse(const std::string &input) {
 }
 
 //------------------------------------------------------------------------------
-void UrlBuilder::addEncodedQueryParameter(const std::string &key,
+UrlBuilder &UrlBuilder::addEncodedQueryParameter(const std::string &key,
                                           const std::string &value) {
     encoded_query_params_.push_back(std::make_pair(key, value));
+    return *this;
 }
 
 //------------------------------------------------------------------------------

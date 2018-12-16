@@ -34,15 +34,14 @@ class RequestBody {
     RequestBody() {}
     RequestBody(const std::string &contentType, ByteArray &&body);
 
-    // Copy and move constructors
-    RequestBody(RequestBody &&);
-    RequestBody(const RequestBody &);
-
-    // Copy and move assignments
-    RequestBody &operator=(RequestBody &&);
-    RequestBody &operator=(const RequestBody &);
+    // Copy and move constructors and assignments
+    RequestBody(RequestBody &&) = default;
+    RequestBody(const RequestBody &) = default;
+    RequestBody &operator=(RequestBody &&) = default;
+    RequestBody &operator=(const RequestBody &) = default;
 
     // Member functions
+    void clear();
     void append(const std::string &content);
 
    private:
@@ -91,6 +90,8 @@ class RequestBuilder : public ReqRepBuilder{
     RequestBuilder &header(const std::string &key, const std::string &value);
     RequestBuilder &headers(const HeadersBuilder &);
     RequestBuilder &appendBody(const std::string &);
+    RequestBuilder &clearBody();
+    RequestBuilder &clearHeaders();
     std::string getHeaderValue(const std::string &key) const;
     Request build();
 

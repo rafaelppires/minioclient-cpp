@@ -23,9 +23,9 @@ Connection::Connection() : connection_(nullptr) {}
 Connection::Connection(EndpointConnection *c) : connection_(c) {}
 
 //------------------------------------------------------------------------------
-Connection::Connection(Connection &&c) : connection_(c.connection_) {
+Connection::Connection(Connection &&c)
+    : connection_(c.connection_), decoder_(std::move(c.decoder_)) {
     c.connection_ = nullptr;
-    decoder_ = std::move(c.decoder_);
 }
 
 //------------------------------------------------------------------------------
@@ -38,9 +38,7 @@ Connection &Connection::operator=(Connection &&c) {
 }
 
 //------------------------------------------------------------------------------
-Connection::~Connection() {
-    delete connection_;
-}
+Connection::~Connection() { delete connection_; }
 
 //------------------------------------------------------------------------------
 Response Connection::requestReply(const Request &r) {

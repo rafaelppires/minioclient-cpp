@@ -7,25 +7,6 @@
 //------------------------------------------------------------------------------
 Response::Response() : code_(-1) {}
 //------------------------------------------------------------------------------
-Response::Response(Response &&r)
-    : code_(std::move(r.code_)),
-      body_(std::move(r.body_)),
-      protocol_(std::move(r.protocol_)),
-      message_(std::move(r.message_)),
-      headers_(std::move(r.headers_)) {}
-
-//------------------------------------------------------------------------------
-Response &Response::operator=(Response &&r) {
-    if (this == &r) return *this;
-    code_ = std::move(r.code_);
-    body_ = std::move(r.body_);
-    protocol_ = std::move(r.protocol_);
-    message_ = std::move(r.message_);
-    headers_ = std::move(r.headers_);
-    return *this;
-}
-
-//------------------------------------------------------------------------------
 Response::Response(const ResponseBuilder &builder) {
     // request_ = builder.request_;
     protocol_ = builder.protocol_;

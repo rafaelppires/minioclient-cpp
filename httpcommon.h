@@ -14,6 +14,7 @@ extern const std::string connection;
 extern const std::string keepalive;
 extern const std::string contenttype;
 extern const std::string transfer_enc;
+extern const std::string auth;
 }
 
 class HeadersBuilder;

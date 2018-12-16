@@ -166,7 +166,12 @@ bool TlsConnection::connect(const std::string &host, int port) {
         SSL_set_fd(cli, socket);
         ERR_clear_error();
         int r = SSL_connect(cli);
-        if (r <= 0) {
+        if (r == 0) {
+            printf("%s\n", ERR_error_string(ERR_get_error(),nullptr));
+            return false;
+        }
+
+        if (r < 0) {
             SSL_free(cli);
             printf("%s: %s\n", sslerr_str(SSL_get_error(cli, r)),
                    ERR_error_string(ERR_get_error(), nullptr));

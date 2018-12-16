@@ -8,4 +8,5 @@ const std::string HttpStrings::connection("Connection");
 const std::string HttpStrings::keepalive("Keep-Alive");
 const std::string HttpStrings::contenttype("Content-Type");
 const std::string HttpStrings::transfer_enc("Transfer-Encoding");
+const std::string HttpStrings::auth("Authorization");
 

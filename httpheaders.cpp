@@ -47,29 +47,13 @@ std::set<std::string> Headers::names() const {
 HeadersBuilder::HeadersBuilder(const Headers &h) { headers_ = h.headers_; }
 
 //------------------------------------------------------------------------------
-HeadersBuilder::HeadersBuilder(HeadersBuilder &&h)
-    : headers_(std::move(h.headers_)) {}
-
-//------------------------------------------------------------------------------
-HeadersBuilder &HeadersBuilder::operator=(HeadersBuilder &&h) {
-    if (&h == this) return *this;
-    headers_ = std::move(h.headers_);
-    return *this;
-}
-
-//------------------------------------------------------------------------------
-HeadersBuilder::HeadersBuilder(const HeadersBuilder &h)
-    : headers_(h.headers_) {}
-
-//------------------------------------------------------------------------------
-HeadersBuilder &HeadersBuilder::operator=(const HeadersBuilder &h) {
-    if (&h == this) return *this;
-    headers_ = h.headers_;
-    return *this;
-}
-
-//------------------------------------------------------------------------------
 Headers HeadersBuilder::build() const { return Headers(*this); }
+
+//------------------------------------------------------------------------------
+HeadersBuilder &HeadersBuilder::clear() {
+    headers_.clear();
+    return *this;
+}
 
 //------------------------------------------------------------------------------
 HeadersBuilder &HeadersBuilder::set(const std::string &key,

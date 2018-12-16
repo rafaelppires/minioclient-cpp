@@ -8,35 +8,17 @@ using HttpStrings::crlf;
 //------------------------------------------------------------------------------
 RequestBody::RequestBody(const std::string &contentType,
                          std::vector<char> &&body) {
-    data_ = body;
-}
-//------------------------------------------------------------------------------
-RequestBody::RequestBody(const RequestBody &r)
-    : data_(r.data_), content_type_(r.content_type_) {}
-
-//------------------------------------------------------------------------------
-RequestBody::RequestBody(RequestBody &&r)
-    : data_(std::move(r.data_)), content_type_(std::move(r.content_type_)) {}
-
-//------------------------------------------------------------------------------
-RequestBody &RequestBody::operator=(const RequestBody &r) {
-    if (this == &r) return *this;
-    data_ = r.data_;
-    content_type_ = r.content_type_;
-    return *this;
-}
-
-//------------------------------------------------------------------------------
-RequestBody &RequestBody::operator=(RequestBody &&r) {
-    if (this == &r) return *this;
-    data_ = std::move(r.data_);
-    content_type_ = std::move(content_type_);
-    return *this;
+    data_ = std::move(body);
 }
 
 //------------------------------------------------------------------------------
 void RequestBody::append(const std::string &content) {
     data_.insert(data_.end(), content.begin(), content.end());
+}
+
+//------------------------------------------------------------------------------
+void RequestBody::clear() {
+    data_.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -163,6 +145,18 @@ std::string RequestBuilder::getHeaderValue(const std::string &k) const {
 RequestBuilder &RequestBuilder::header(const std::string &key,
                                        const std::string &value) {
     headers_.set(key, value);
+    return *this;
+}
+
+//------------------------------------------------------------------------------
+RequestBuilder &RequestBuilder::clearHeaders() {
+    headers_.clear();
+    return *this;
+}
+
+//------------------------------------------------------------------------------
+RequestBuilder &RequestBuilder::clearBody() {
+    body_.clear();
     return *this;
 }
 

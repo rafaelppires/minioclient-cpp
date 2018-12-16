@@ -29,9 +29,7 @@ std::string Http1Decoder::stateString() {
 }
 
 //------------------------------------------------------------------------------
-void Http1Decoder::setHead() {
-    head_ = true;
-}
+void Http1Decoder::setHead() { head_ = true; }
 
 //------------------------------------------------------------------------------
 size_t coun = 0;
@@ -107,15 +105,18 @@ bool Http1Decoder::header_state() {
     buffer_.erase(0, headerend + 4);
 
     if (body_mustnot_) {
+        printf("It's a body must not\n");
         reset();
         return true;  // finished
     }
 
-    if (tolower(reqrep.getHeaderValue("Connection")) == "close") {
+    /*if (tolower(reqrep.getHeaderValue("Connection")) == "close") {
+printf("It's a connection close Header: <%s>\n",
+reqrep.getHeaderValue(HttpStrings::transfer_enc).c_str());
         content_len_ = 0;
         s_ = BODY;
         return false;  // keep reading the body
-    }
+    }//*/
 
     if (tolower(reqrep.getHeaderValue(HttpStrings::transfer_enc)) ==
         "chunked") {
@@ -170,6 +171,10 @@ bool Http1Decoder::chunked_state() {
     if (pos == std::string::npos) return true;
 
     unsigned size = std::stoi(buffer_.substr(0, pos), nullptr, 16);
+
+    if (buffer_.size() < pos + crlf.size() + size)
+        return true;  // Chunk not  yet complete
+
     buffer_.erase(0, pos + crlf.size());
     if (size == 0) {
         reset();

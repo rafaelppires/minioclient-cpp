@@ -25,7 +25,7 @@ class Scheme {
 class UrlBuilder;
 class HttpUrl {
    public:
-    HttpUrl() {}
+    HttpUrl() : port_(-1) {}
     HttpUrl(const UrlBuilder &);
     std::string encodedPath() const;
     std::string encodedQuery() const;
@@ -47,6 +47,13 @@ class HttpUrl {
 class UrlBuilder {
    public:
     UrlBuilder();
+    UrlBuilder(const HttpUrl&);
+
+    // move/copy constructors and assignments
+    UrlBuilder(UrlBuilder&&) = default;
+    UrlBuilder(const UrlBuilder&) = default;
+    UrlBuilder &operator=(UrlBuilder&&) = default;
+    UrlBuilder &operator=(const UrlBuilder&) = default;
 
     UrlBuilder &host(const std::string &host);
     UrlBuilder &port(int p);
@@ -54,8 +61,8 @@ class UrlBuilder {
 
     void addEncodedPathSegment(const std::string &ps);
     void addPathSegment(const std::string &ps);
-    void addEncodedQueryParameter(const std::string &key,
-                                  const std::string &value);
+    UrlBuilder &addEncodedQueryParameter(const std::string &key,
+                                         const std::string &value);
     int effectivePort() const;
     void url(const HttpUrl &);
     HttpUrl build();

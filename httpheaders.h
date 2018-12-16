@@ -29,13 +29,18 @@ class HeadersBuilder {
    public:
     HeadersBuilder() {}
     HeadersBuilder(const Headers &);
-    HeadersBuilder(HeadersBuilder &&);
-    HeadersBuilder &operator=(HeadersBuilder &&);
-    HeadersBuilder(const HeadersBuilder &);
-    HeadersBuilder &operator=(const HeadersBuilder &);
+
+    // Copy/move constructors/assignments
+    HeadersBuilder(HeadersBuilder &&) = default;
+    HeadersBuilder(const HeadersBuilder &) = default;
+    HeadersBuilder &operator=(HeadersBuilder &&) = default;
+    HeadersBuilder &operator=(const HeadersBuilder &) = default;
+
     Headers build() const;
     std::string get(const std::string &key) const;
+
     HeadersBuilder &set(const std::string &key, const std::string &value);
+    HeadersBuilder &clear();
 
     static HeadersBuilder parse(const std::string &);
 
