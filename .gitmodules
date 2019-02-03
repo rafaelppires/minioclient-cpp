@@ -1,0 +1,3 @@
+[submodule "simple-http"]
+	path = simple-http
+	url = https://github.com/rafaelppires/simple-http.git
